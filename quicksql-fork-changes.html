@@ -1,0 +1,255 @@
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>United-Codes/quicksql — Fork Changes</title>
+  <style>
+    :root{--bg:#0d1117;--surface:#161b22;--surface2:#21262d;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--green:#3fb950;--green-bg:#0d2a1a;--blue:#58a6ff;--blue-bg:#0c1f3d;--amber:#d29922;--amber-bg:#2d1f00;--red:#f85149;--red-bg:#2d0f0f;--purple:#bc8cff;--purple-bg:#1e0f3d;--teal:#39d0c4;--teal-bg:#0a2526;--accent:#1f6feb;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;line-height:1.6;}
+    .hero{background:linear-gradient(135deg,#0c1f3d 0%,#0d1117 50%,#0d2a1a 100%);border-bottom:1px solid var(--border);padding:60px 40px 50px;text-align:center;}
+    .hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:13px;color:var(--muted);margin-bottom:24px;}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);display:inline-block;}
+    .hero h1{font-size:2.6rem;font-weight:700;letter-spacing:-0.5px;margin-bottom:12px;}
+    .hero h1 span{color:var(--blue);}
+    .hero p{font-size:1.1rem;color:var(--muted);max-width:580px;margin:0 auto 28px;}
+    .hero-stats{display:flex;justify-content:center;gap:32px;flex-wrap:wrap;}
+    .stat{display:flex;flex-direction:column;align-items:center;}
+    .stat-num{font-size:2rem;font-weight:700;color:var(--blue);}
+    .stat-label{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+    .container{max-width:1100px;margin:0 auto;padding:48px 24px;}
+    .section-title{display:flex;align-items:center;gap:12px;margin-bottom:24px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+    .section-title h2{font-size:1.3rem;font-weight:600;}
+    .section-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+    .section-count{margin-left:auto;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:12px;color:var(--muted);}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:52px;}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;transition:border-color .2s,transform .15s;position:relative;overflow:hidden;}
+    .card:hover{border-color:var(--accent);transform:translateY(-2px);}
+    .card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;border-radius:12px 0 0 12px;}
+    .card.green::before{background:var(--green);}
+    .card.blue::before{background:var(--blue);}
+    .card.amber::before{background:var(--amber);}
+    .card.red::before{background:var(--red);}
+    .card.purple::before{background:var(--purple);}
+    .card.teal::before{background:var(--teal);}
+    .card-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;}
+    .card-icon{font-size:22px;flex-shrink:0;margin-top:1px;}
+    .card-title{font-size:.95rem;font-weight:600;line-height:1.35;flex:1;}
+    .card-version{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;flex-shrink:0;margin-top:2px;}
+    .card.green .card-version{background:var(--green-bg);color:var(--green);}
+    .card.blue .card-version{background:var(--blue-bg);color:var(--blue);}
+    .card.amber .card-version{background:var(--amber-bg);color:var(--amber);}
+    .card.red .card-version{background:var(--red-bg);color:var(--red);}
+    .card.purple .card-version{background:var(--purple-bg);color:var(--purple);}
+    .card.teal .card-version{background:var(--teal-bg);color:var(--teal);}
+    .card-body{font-size:.875rem;color:var(--muted);line-height:1.55;margin-left:34px;}
+    .card-body code{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-family:'SF Mono','Fira Code',Consolas,monospace;font-size:12px;color:var(--text);}
+    .card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;margin-left:34px;}
+    .tag{font-size:11px;padding:2px 8px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);}
+    .perf-grid{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:52px;}
+    .perf-grid table{width:100%;border-collapse:collapse;}
+    .perf-grid th{background:var(--surface2);padding:12px 18px;font-size:.8rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);text-align:left;border-bottom:1px solid var(--border);}
+    .perf-grid td{padding:13px 18px;font-size:.875rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+    .perf-grid tr:last-child td{border-bottom:none;}
+    .perf-grid tr:hover td{background:var(--surface2);}
+    .perf-grid td:first-child{font-family:'SF Mono',Consolas,monospace;font-size:12px;color:var(--blue);}
+    .perf-grid td:nth-child(2){color:var(--text);}
+    .perf-grid td:nth-child(3){color:var(--muted);font-size:.82rem;}
+    .timeline{position:relative;margin-bottom:52px;}
+    .timeline::before{content:'';position:absolute;left:14px;top:0;bottom:0;width:2px;background:var(--border);}
+    .tl-item{position:relative;padding-left:48px;margin-bottom:24px;}
+    .tl-dot{position:absolute;left:6px;top:4px;width:18px;height:18px;border-radius:50%;border:2px solid var(--bg);}
+    .tl-dot.green{background:var(--green);}
+    .tl-dot.blue{background:var(--blue);}
+    .tl-dot.amber{background:var(--amber);}
+    .tl-dot.purple{background:var(--purple);}
+    .tl-date{font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;}
+    .tl-title{font-size:.95rem;font-weight:600;margin-bottom:4px;}
+    .tl-desc{font-size:.85rem;color:var(--muted);}
+    .files-summary{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:52px;}
+    .file-row{display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--border);font-size:.85rem;}
+    .file-row:last-child{border-bottom:none;}
+    .file-name{color:var(--blue);font-family:monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .additions{color:var(--green);font-size:12px;font-weight:600;min-width:40px;}
+    .deletions{color:var(--red);font-size:12px;font-weight:600;min-width:40px;}
+    footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center;color:var(--muted);font-size:.85rem;}
+    footer a{color:var(--blue);text-decoration:none;}
+    footer a:hover{text-decoration:underline;}
+    @media(max-width:600px){.hero h1{font-size:1.8rem;}.cards{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-badge"><span class="dot"></span>&nbsp;United-Codes/quicksql — forked from oracle/quicksql</div>
+  <h1>What’s <span>New</span> in the Fork</h1>
+  <p>All additions and improvements made by United-Codes on top of the original Oracle QuickSQL library.</p>
+  <div class="hero-stats">
+    <div class="stat"><span class="stat-num">30</span><span class="stat-label">Commits Ahead</span></div>
+    <div class="stat"><span class="stat-num">40</span><span class="stat-label">Files Changed</span></div>
+    <div class="stat"><span class="stat-num">111k+</span><span class="stat-label">Lines Added</span></div>
+    <div class="stat"><span class="stat-num">v1.3.0–1.3.14</span><span class="stat-label">New Versions</span></div>
+  </div>
+</div>
+<div class="container">
+
+  <div class="section-title">
+    <div class="section-icon" style="background:#0d2a1a">✨</div>
+    <h2>New Features</h2>
+    <span class="section-count">9 additions</span>
+  </div>
+  <div class="cards">
+    <div class="card green">
+      <div class="card-header"><span class="card-icon">🗄</span><span class="card-title">Oracle 26ai Database Version Support</span><span class="card-version">v1.3.0</span></div>
+      <div class="card-body">Added <code>26ai</code> as a valid value for the <code>db</code> setting. Includes updated grammar docs and test cases for native boolean and <code>yn</code> override behavior under this version.</div>
+      <div class="card-tags"><span class="tag">db setting</span><span class="tag">grammar</span></div>
+    </div>
+    <div class="card blue">
+      <div class="card-header"><span class="card-icon">⏪</span><span class="card-title">Flashback Data Archive Directives</span><span class="card-version">v1.3.1</span></div>
+      <div class="card-body">New <code>/flashback</code> and <code>/fda</code> table-level directives. Generates <code>ALTER TABLE … FLASHBACK ARCHIVE</code> after table creation. Optionally accepts an archive name, e.g. <code>/flashback myarchive</code>.</div>
+      <div class="card-tags"><span class="tag">table directive</span><span class="tag">DDL</span></div>
+    </div>
+    <div class="card purple">
+      <div class="card-header"><span class="card-icon">🏷</span><span class="card-title">Oracle 23ai Schema Annotations</span><span class="card-version">v1.3.2</span></div>
+      <div class="card-body">New <code>{key 'value'}</code> syntax for Oracle SQL annotations on tables, columns, and views. Supports key-value pairs, flag annotations, and multiple annotations. Emitted as <code>ANNOTATIONS(…)</code> clauses in DDL.</div>
+      <div class="card-tags"><span class="tag">23ai</span><span class="tag">annotations</span><span class="tag">tables</span><span class="tag">views</span></div>
+    </div>
+    <div class="card teal">
+      <div class="card-header"><span class="card-icon">🌐</span><span class="card-title">Multi-lingual Translation Directive</span><span class="card-version">v1.3.3</span></div>
+      <div class="card-body">New <code>/trans</code> column directive (also <code>/translation</code>). Auto-generates a shared <code>language</code> table, a <code>&lt;table&gt;_trans</code> table, and a <code>&lt;table&gt;_resolved</code> view using <code>sys_context</code>. Configurable via <code>transcontext</code>.</div>
+      <div class="card-tags"><span class="tag">column directive</span><span class="tag">i18n</span><span class="tag">views</span></div>
+    </div>
+    <div class="card amber">
+      <div class="card-header"><span class="card-icon">💬</span><span class="card-title">DESCRIPTION Annotation → COMMENT ON</span><span class="card-version">v1.3.4</span></div>
+      <div class="card-body">Using a <code>DESCRIPTION</code> key in an annotation auto-generates a <code>COMMENT ON TABLE</code> or <code>COMMENT ON COLUMN</code> statement. Both single-quoted and double-quoted values are supported.</div>
+      <div class="card-tags"><span class="tag">annotations</span><span class="tag">comments</span></div>
+    </div>
+    <div class="card red">
+      <div class="card-header"><span class="card-icon">🔒</span><span class="card-title">Immutable (Append-Only) Tables</span><span class="card-version">v1.3.5</span></div>
+      <div class="card-body">New <code>/immutable</code> directive creates tables with <code>NO DROP UNTIL 0 DAYS IDLE</code> / <code>NO DELETE UNTIL 16 DAYS AFTER INSERT</code> and a <code>BEFORE INSERT</code> trigger blocking updates/deletes. Ideal for audit logs.</div>
+      <div class="card-tags"><span class="tag">table directive</span><span class="tag">audit</span><span class="tag">DDL</span></div>
+    </div>
+    <div class="card green">
+      <div class="card-header"><span class="card-icon">📦</span><span class="card-title">SODA Collection Tables</span><span class="card-version">v1.3.5</span></div>
+      <div class="card-body">New <code>/soda</code> directive generates a fixed-schema SODA-compatible collection table with <code>id</code>, <code>created_on</code>, <code>last_modified</code>, <code>version</code>, and <code>json_document</code> columns.</div>
+      <div class="card-tags"><span class="tag">SODA</span><span class="tag">JSON</span><span class="tag">table directive</span></div>
+    </div>
+    <div class="card blue">
+      <div class="card-header"><span class="card-icon">📂</span><span class="card-title">Table Groups via TGROUP Annotation</span><span class="card-version">v1.3.5</span></div>
+      <div class="card-body">New <code>{TGROUP 'name'}</code> annotation (renamed from <code>GROUP</code>, a reserved word) generates <code>INSERT</code> statements into <code>USER_ANNOTATIONS_GROUPS$</code> for logical table grouping.</div>
+      <div class="card-tags"><span class="tag">annotations</span><span class="tag">organization</span></div>
+    </div>
+    <div class="card purple">
+      <div class="card-header"><span class="card-icon">🔷</span><span class="card-title">DOMAIN Types, SDO_GEOMETRY &amp; Duality Views</span><span class="card-version">v1.3.13</span></div>
+      <div class="card-body">Added support for Oracle DOMAIN types, <code>SDO_GEOMETRY</code> spatial column type, and JSON-Relational Duality Views — bringing the library up to date with Oracle 23ai+.</div>
+      <div class="card-tags"><span class="tag">23ai</span><span class="tag">spatial</span><span class="tag">duality views</span></div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <div class="section-icon" style="background:#2d0f0f">🐛</div>
+    <h2>Bug Fixes</h2>
+    <span class="section-count">14 fixes</span>
+  </div>
+  <div class="cards">
+    <div class="card amber">
+      <div class="card-header"><span class="card-icon">🏷</span><span class="card-title">Reserved Word Prefix Skipped with User Prefix</span><span class="card-version">v1.3.0</span></div>
+      <div class="card-body">Tables named with reserved keywords (e.g. <code>user</code>) were always prefixed with <code>the_</code>. Now, if a user-defined prefix is already set, the extra <code>the_</code> prefix is correctly skipped.</div>
+    </div>
+    <div class="card amber">
+      <div class="card-header"><span class="card-icon">📅</span><span class="card-title">Default Date Expressions No Longer Quoted</span><span class="card-version">v1.3.5</span></div>
+      <div class="card-body">SQL date expressions like <code>sysdate</code>, <code>current_timestamp</code>, <code>systimestamp</code> used with <code>/default</code> were incorrectly wrapped in quotes. Now generated verbatim.</div>
+    </div>
+    <div class="card amber">
+      <div class="card-header"><span class="card-icon">🔗</span><span class="card-title">External FK Prefix No Longer Prepended</span><span class="card-version">v1.3.6</span></div>
+      <div class="card-body">FK references to tables outside the QuickSQL model no longer get the object prefix added. E.g. <code>/fk UC_FLOWFORMS_FORM</code> with prefix <code>IW</code> now correctly generates <code>references UC_FLOWFORMS_FORM</code>.</div>
+    </div>
+    <div class="card red">
+      <div class="card-header"><span class="card-icon">⚠</span><span class="card-title">11 Critical DDL Generation Bugs</span><span class="card-version">v1.3.5+</span></div>
+      <div class="card-body">Fixes: native boolean <code>true</code>/<code>false</code> defaults, view <code>FROM</code> spacing, reserved word aliases, trailing <code>AND</code>, duplicate column aliases, wrong FK columns in views, SODA trigger skipping.</div>
+    </div>
+    <div class="card blue">
+      <div class="card-header"><span class="card-icon">🔄</span><span class="card-title">ANSI JOIN Syntax in Views</span><span class="card-version">v1.3.11</span></div>
+      <div class="card-body">Views now use standard <code>LEFT JOIN … ON</code> and <code>CROSS JOIN</code> instead of Oracle-proprietary <code>(+)</code> syntax. Tables are topologically sorted so base tables appear first.</div>
+    </div>
+    <div class="card blue">
+      <div class="card-header"><span class="card-icon">🔒</span><span class="card-title">Immutable Table Trigger Corrected</span><span class="card-version">v1.3.11</span></div>
+      <div class="card-body">Immutable tables now correctly use <code>BEFORE INSERT</code> only, and the dead <code>ELSIF UPDATING</code> branch for <code>row_version</code> is removed.</div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <div class="section-icon" style="background:#1e0f3d">⚡</div>
+    <h2>Performance Optimizations</h2>
+    <span class="section-count">v1.3.12</span>
+  </div>
+  <div class="perf-grid">
+    <table>
+      <thead><tr><th>File</th><th>Optimization</th><th>Technique</th></tr></thead>
+      <tbody>
+        <tr><td>ddl.js</td><td>Pre-computed lowercase constants in normalize()</td><td>Avoid repeat toLowerCase() calls</td></tr>
+        <tr><td>naming.js</td><td>Cached toUpperCase() in singular()</td><td>Single call, reused result</td></tr>
+        <tr><td>naming.js</td><td>charAt(0) for quote detection</td><td>Replaced indexOf() == 0</td></tr>
+        <tr><td>tree.js</td><td>Pre-computed static toLowerCase() literals</td><td>Compile-time constants</td></tr>
+        <tr><td>tree.js</td><td>Arithmetic view padding</td><td>No temp string allocation</td></tr>
+        <tr><td>lexer.js</td><td>Single toLowerCase() in quote-prefix detection</td><td>Reduced redundant calls</td></tr>
+        <tr><td>lexer.js</td><td>Cached indexOf results in fixedExponent()</td><td>Avoid repeated searches</td></tr>
+        <tr><td>test/benchmark.js</td><td>New benchmark script added</td><td>Measure parse performance</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title">
+    <div class="section-icon" style="background:#0c1f3d">🎨</div>
+    <h2>ERD Diagram UI Improvements</h2>
+    <span class="section-count">v1.3.14</span>
+  </div>
+  <div class="cards">
+    <div class="card blue">
+      <div class="card-header"><span class="card-icon">🎨</span><span class="card-title">Distinct Highlight Colors</span><span class="card-version">v1.3.14</span></div>
+      <div class="card-body">Selected tables use vivid blue; related tables use warm amber/gold — instantly distinguishable at any depth in the diagram.</div>
+    </div>
+    <div class="card teal">
+      <div class="card-header"><span class="card-icon">⬛</span><span class="card-title">White Text on Highlighted Tables</span><span class="card-version">v1.3.14</span></div>
+      <div class="card-body">Text color switches to white during highlight for reliable contrast in both light and dark themes.</div>
+    </div>
+    <div class="card amber">
+      <div class="card-header"><span class="card-icon">🔵</span><span class="card-title">Active Filter Chip Styling</span><span class="card-version">v1.3.14</span></div>
+      <div class="card-body">Group filter chips now use a fixed accent blue with white text instead of a theme foreground/background swap, ensuring visibility across all themes.</div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <div class="section-icon" style="background:#0a2526">📅</div>
+    <h2>Release Timeline</h2>
+    <span class="section-count">Feb 6–12, 2026</span>
+  </div>
+  <div class="timeline">
+    <div class="tl-item"><div class="tl-dot green"></div><div class="tl-date">Feb 6, 2026</div><div class="tl-title">v1.3.0 – v1.3.4 · Initial fork burst</div><div class="tl-desc">26ai support, reserved word fix, Flashback directives, Oracle 23ai annotations, translation directive, DESCRIPTION→COMMENT ON</div></div>
+    <div class="tl-item"><div class="tl-dot blue"></div><div class="tl-date">Feb 9, 2026</div><div class="tl-title">v1.3.5 – v1.3.6 · Major feature batch</div><div class="tl-desc">Immutable tables, SODA collections, table groups, translation-aware views, default date fix, external FK prefix fix, 11 critical DDL bug fixes</div></div>
+    <div class="tl-item"><div class="tl-dot amber"></div><div class="tl-date">Feb 10, 2026</div><div class="tl-title">v1.3.11 – v1.3.12 · Standards &amp; speed</div><div class="tl-desc">ANSI JOIN syntax in views, immutable trigger fix, 8 performance micro-optimizations, benchmark tooling</div></div>
+    <div class="tl-item"><div class="tl-dot purple"></div><div class="tl-date">Feb 11–12, 2026</div><div class="tl-title">v1.3.13 – v1.3.14 · Oracle 23ai+ &amp; ERD polish</div><div class="tl-desc">DOMAIN types, SDO_GEOMETRY, Duality Views, ERD highlight/chip styling, TGROUP rename, immutable clause ordering fixes</div></div>
+  </div>
+
+  <div class="section-title">
+    <div class="section-icon" style="background:#1e1a00">📁</div>
+    <h2>Key Files Changed</h2>
+    <span class="section-count">40 total files</span>
+  </div>
+  <div class="files-summary">
+    <div class="file-row"><span class="file-name">src/tree.js</span><span class="additions">+708</span><span class="deletions">-145</span><span style="color:var(--muted);font-size:12px">Core DDL generator — most changes</span></div>
+    <div class="file-row"><span class="file-name">src/ddl.js</span><span class="additions">+186</span><span class="deletions">-25</span><span style="color:var(--muted);font-size:12px">New directives &amp; DDL output logic</span></div>
+    <div class="file-row"><span class="file-name">src/quick-erd/mermaid-renderer.js</span><span class="additions">+360</span><span class="deletions">-0</span><span style="color:var(--muted);font-size:12px">New Mermaid ERD renderer</span></div>
+    <div class="file-row"><span class="file-name">src/quick-erd/rappid-renderer.js</span><span class="additions">+296</span><span class="deletions">-0</span><span style="color:var(--muted);font-size:12px">New Rappid ERD renderer</span></div>
+    <div class="file-row"><span class="file-name">src/quick-erd/toolbar.js</span><span class="additions">+165</span><span class="deletions">-0</span><span style="color:var(--muted);font-size:12px">New ERD toolbar component</span></div>
+    <div class="file-row"><span class="file-name">src/quick-erd/diagram-preview.js</span><span class="additions">+158</span><span class="deletions">-0</span><span style="color:var(--muted);font-size:12px">New diagram preview module</span></div>
+    <div class="file-row"><span class="file-name">src/quick-erd/quick-erd.css</span><span class="additions">+145</span><span class="deletions">-1</span><span style="color:var(--muted);font-size:12px">ERD styling updates</span></div>
+    <div class="file-row"><span class="file-name">test/small_tests.js</span><span class="additions">+588</span><span class="deletions">-6</span><span style="color:var(--muted);font-size:12px">Extensive new test coverage</span></div>
+    <div class="file-row"><span class="file-name">doc/user/quick-sql-grammar.md</span><span class="additions">+149</span><span class="deletions">-6</span><span style="color:var(--muted);font-size:12px">Annotations, new directives documented</span></div>
+    <div class="file-row"><span class="file-name">CHANGELOG.md</span><span class="additions">+79</span><span class="deletions">-6</span><span style="color:var(--muted);font-size:12px">Full version history for fork</span></div>
+  </div>
+
+</div>
+<footer>
+  <p>United-Codes/quicksql is a fork of <a href="https://github.com/oracle/quicksql" target="_blank">oracle/quicksql</a> &nbsp;·&nbsp; View the <a href="https://github.com/United-Codes/quicksql/compare/oracle%3Aquicksql%3Amain...main" target="_blank">full diff on GitHub</a></p>
+</footer>
+
+</body></html>
