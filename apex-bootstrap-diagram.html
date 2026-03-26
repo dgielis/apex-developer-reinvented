@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX Bootstrap — Architecture &amp; Flow Diagram</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181b24;
+    --surface2: #1e222e;
+    --border: #2a2f3e;
+    --accent: #6c63ff;
+    --accent2: #00c9a7;
+    --accent3: #f7b731;
+    --accent4: #fc5c65;
+    --accent5: #45aaf2;
+    --text: #e2e4ea;
+    --text2: #9ba0b0;
+    --text3: #6b7088;
+    --oracle: #c74634;
+    --docker: #2496ed;
+    --jenkins: #d33833;
+    --gitlab: #fc6d26;
+    --git: #f05032;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  .header {
+    text-align: center;
+    padding: 60px 20px 40px;
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+  .header h1 {
+    font-size: 42px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .header .subtitle {
+    color: var(--text2);
+    font-size: 18px;
+    font-weight: 400;
+  }
+  .header .tagline {
+    color: var(--text3);
+    font-size: 14px;
+    margin-top: 10px;
+    font-style: italic;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
+
+  /* ── Section titles ── */
+  .section-title {
+    font-size: 26px;
+    font-weight: 600;
+    margin: 60px 0 30px;
+    padding-left: 18px;
+    border-left: 4px solid var(--accent);
+    color: var(--text);
+  }
+  .section-desc {
+    color: var(--text2);
+    font-size: 15px;
+    margin: -20px 0 30px 18px;
+  }
+
+  /* ── Command Modes ── */
+  .modes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 50px;
+  }
+  .mode-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    transition: transform .2s, border-color .2s;
+  }
+  .mode-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .mode-cmd {
+    font-family: 'SF Mono', monospace;
+    font-size: 15px;
+    color: var(--accent2);
+    margin-bottom: 8px;
+  }
+  .mode-label { font-weight: 600; font-size: 17px; margin-bottom: 6px; }
+  .mode-desc { color: var(--text2); font-size: 13px; }
+
+  /* ── Big Flow Diagram ── */
+  .flow-diagram {
+    position: relative;
+    padding: 40px 0;
+  }
+  .flow-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--accent), var(--accent2), var(--accent3), var(--accent4));
+    border-radius: 2px;
+    z-index: 0;
+  }
+  .flow-step {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    z-index: 1;
+  }
+  .flow-step:nth-child(odd) { flex-direction: row; }
+  .flow-step:nth-child(even) { flex-direction: row-reverse; }
+  .flow-step .flow-content {
+    width: calc(50% - 40px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 26px;
+    position: relative;
+  }
+  .flow-step:nth-child(odd) .flow-content { margin-right: auto; }
+  .flow-step:nth-child(even) .flow-content { margin-left: auto; }
+  .flow-dot {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    background: var(--bg);
+    z-index: 2;
+    margin-top: 20px;
+  }
+  .flow-number {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    z-index: 2;
+    margin-top: 12px;
+  }
+  .flow-step:nth-child(1) .flow-number { background: var(--accent); }
+  .flow-step:nth-child(2) .flow-number { background: #7c5cbf; }
+  .flow-step:nth-child(3) .flow-number { background: var(--docker); }
+  .flow-step:nth-child(4) .flow-number { background: var(--oracle); }
+  .flow-step:nth-child(5) .flow-number { background: var(--accent2); }
+  .flow-step:nth-child(6) .flow-number { background: var(--git); }
+  .flow-step:nth-child(7) .flow-number { background: var(--jenkins); }
+  .flow-step:nth-child(8) .flow-number { background: var(--accent3); }
+
+  .flow-title {
+    font-weight: 700;
+    font-size: 17px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .flow-title .icon { font-size: 20px; }
+  .flow-details {
+    color: var(--text2);
+    font-size: 13px;
+  }
+  .flow-details ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 6px;
+  }
+  .flow-details li {
+    padding: 3px 0 3px 18px;
+    position: relative;
+  }
+  .flow-details li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent2);
+    font-weight: bold;
+  }
+  .flow-tech {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1px 8px;
+    font-family: 'SF Mono', monospace;
+    font-size: 11px;
+    color: var(--accent5);
+    margin-top: 4px;
+  }
+
+  /* ── Docker Network Diagram ── */
+  .docker-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 30px;
+    margin: 30px 0;
+    overflow: hidden;
+  }
+  .env-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .env-block {
+    border: 2px solid;
+    border-radius: 14px;
+    padding: 16px;
+    min-width: 0;
+    flex: 1 1 280px;
+    max-width: 100%;
+  }
+  .env-block.dev { border-color: var(--accent2); }
+  .env-block.test { border-color: var(--accent3); }
+  .env-block.prod { border-color: var(--accent4); }
+  .env-block.cicd { border-color: var(--accent5); }
+  .env-label {
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .env-block.dev .env-label { color: var(--accent2); }
+  .env-block.test .env-label { color: var(--accent3); }
+  .env-block.prod .env-label { color: var(--accent4); }
+  .env-block.cicd .env-label { color: var(--accent5); }
+  .net-label {
+    font-family: 'SF Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 10px;
+  }
+  .svc {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .svc-info { min-width: 0; flex: 1; }
+  .svc-name { font-weight: 600; font-size: 13px; }
+  .svc-port {
+    font-family: 'SF Mono', monospace;
+    font-size: 11px;
+    color: var(--accent5);
+    background: rgba(69,170,242,.1);
+    padding: 2px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .svc-img {
+    font-family: 'SF Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  /* ── Config Derivation ── */
+  .config-flow {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 36px;
+    margin: 30px 0;
+  }
+  .config-input {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .config-input code {
+    font-family: 'SF Mono', monospace;
+    font-size: 20px;
+    color: var(--accent3);
+    background: var(--surface2);
+    padding: 8px 24px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .config-arrow {
+    text-align: center;
+    color: var(--accent);
+    font-size: 28px;
+    margin: 10px 0;
+  }
+  .derived-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .derived-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .derived-key {
+    font-size: 11px;
+    color: var(--text3);
+    white-space: nowrap;
+  }
+  .derived-val {
+    font-family: 'SF Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    word-break: break-all;
+  }
+
+  /* ── CI/CD Pipeline ── */
+  .pipeline {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    margin: 30px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .pipeline-stage {
+    flex: 1;
+    min-width: 160px;
+    max-width: 220px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 22px 18px;
+    position: relative;
+    text-align: center;
+  }
+  .pipeline-stage:first-child { border-radius: 14px 0 0 14px; }
+  .pipeline-stage:last-child { border-radius: 0 14px 14px 0; }
+  .pipeline-stage::after {
+    content: '▸';
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-size: 18px;
+    z-index: 1;
+  }
+  .pipeline-stage:last-child::after { display: none; }
+  .stage-icon { font-size: 26px; margin-bottom: 8px; }
+  .stage-name { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+  .stage-detail {
+    font-size: 11px;
+    color: var(--text2);
+    font-family: 'SF Mono', monospace;
+  }
+
+  /* ── Module Architecture ── */
+  .modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 14px;
+    margin: 30px 0;
+  }
+  .module-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    transition: border-color .2s;
+  }
+  .module-card:hover { border-color: var(--accent); }
+  .module-file {
+    font-family: 'SF Mono', monospace;
+    font-size: 12px;
+    color: var(--accent5);
+    margin-bottom: 6px;
+  }
+  .module-name { font-weight: 700; font-size: 16px; margin-bottom: 6px; }
+  .module-role { font-size: 13px; color: var(--text2); }
+  .module-tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-top: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .tag-core { background: rgba(108,99,255,.15); color: var(--accent); }
+  .tag-infra { background: rgba(36,150,237,.15); color: var(--docker); }
+  .tag-cicd { background: rgba(252,109,38,.15); color: var(--gitlab); }
+  .tag-db { background: rgba(199,70,52,.15); color: var(--oracle); }
+  .tag-util { background: rgba(0,201,167,.15); color: var(--accent2); }
+
+  /* ── State Tracking ── */
+  .state-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    margin: 30px 0;
+    font-family: 'SF Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text2);
+  }
+  .state-block .key { color: var(--accent5); }
+  .state-block .val { color: var(--accent2); }
+  .state-block .comment { color: var(--text3); font-style: italic; }
+
+  /* ── Features List ── */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    margin: 30px 0 60px;
+  }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+  }
+  .feature-icon { font-size: 28px; margin-bottom: 10px; }
+  .feature-name { font-weight: 700; font-size: 16px; margin-bottom: 6px; }
+  .feature-desc { font-size: 13px; color: var(--text2); }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--text3);
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+
+  /* ── Responsive ── */
+
+  /* Tablet / half-screen panel */
+  @media (max-width: 1100px) {
+    .flow-step, .flow-step:nth-child(even) { flex-direction: column !important; align-items: stretch; }
+    .flow-step .flow-content { width: 100%; margin: 0 !important; }
+    .flow-line { display: none; }
+    .flow-number { display: none; }
+    .env-row { flex-direction: column; align-items: stretch; }
+    .env-block { max-width: 100%; flex-basis: 100%; }
+    .pipeline { flex-wrap: wrap; }
+    .pipeline-stage { border-radius: 10px !important; min-width: 140px; flex: 1 1 140px; }
+    .pipeline-stage::after { display: none; }
+    .modes-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    .modules-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .derived-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .features-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .docker-diagram { padding: 20px; }
+    .config-flow { padding: 20px; }
+  }
+
+  /* Narrow panel / mobile */
+  @media (max-width: 600px) {
+    .container { padding: 0 12px; }
+    .header { padding: 30px 12px 24px; }
+    .header h1 { font-size: 26px; }
+    .header .subtitle { font-size: 15px; }
+    .section-title { font-size: 20px; margin: 40px 0 20px; }
+    .section-desc { font-size: 13px; margin: -12px 0 20px 18px; }
+    .modes-grid { grid-template-columns: 1fr; }
+    .modules-grid { grid-template-columns: 1fr; }
+    .derived-grid { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
+    .pipeline { flex-direction: column; align-items: stretch; }
+    .pipeline-stage { max-width: 100%; min-width: 0; }
+    .docker-diagram { padding: 14px; }
+    .config-flow { padding: 14px; }
+    .config-input code { font-size: 16px; padding: 6px 16px; }
+    .flow-content { padding: 16px !important; }
+    .svc { padding: 8px 10px; }
+    .state-block { padding: 16px; font-size: 11px; overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<div class="header">
+  <h1>APEX Bootstrap</h1>
+  <div class="subtitle">Oracle APEX Development Platform — One Command Setup</div>
+  <div class="tagline">Infrastructure-as-Code for Oracle APEX: Database, ORDS, CI/CD, and Development Tooling</div>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════ COMMAND MODES ═══════════════════ -->
+<div class="section-title">Command Modes</div>
+<p class="section-desc">Five operational modes covering the full lifecycle from setup to teardown.</p>
+
+<div class="modes-grid">
+  <div class="mode-card">
+    <div class="mode-cmd">apex-bootstrap init</div>
+    <div class="mode-label">Full Platform Init</div>
+    <div class="mode-desc">Complete greenfield setup: Docker containers, Oracle DB, ORDS, GitLab, Jenkins, scaffold project, wire CI/CD. Everything from zero to running.</div>
+  </div>
+  <div class="mode-card">
+    <div class="mode-cmd">apex-bootstrap add</div>
+    <div class="mode-label">Add Project</div>
+    <div class="mode-desc">Adds a new APEX project to already-running infrastructure. Auto-detects running containers, discovers next available APP_ID, creates new schema &amp; CI/CD jobs.</div>
+  </div>
+  <div class="mode-card">
+    <div class="mode-cmd">apex-bootstrap uninstall</div>
+    <div class="mode-label">Full Uninstall</div>
+    <div class="mode-desc">Removes all bootstrap-owned Docker resources, cleans up installed packages (Homebrew/apt), deletes tracked repos and log files.</div>
+  </div>
+  <div class="mode-card">
+    <div class="mode-cmd">apex-bootstrap docker-clean</div>
+    <div class="mode-label">Docker Reset</div>
+    <div class="mode-desc">Resets all Docker state — containers, volumes, networks, and cache — while preserving images. Nuclear reset for a fresh start.</div>
+  </div>
+  <div class="mode-card">
+    <div class="mode-cmd">apex-bootstrap vk</div>
+    <div class="mode-label">Vibe Kanban</div>
+    <div class="mode-desc">Installs VK workstation toolchain: fnm, Node.js LTS, pnpm, Rust, cargo-watch, sqlx-cli, Claude Code, and clones vibe-kanban repo.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MAIN INIT FLOW ═══════════════════ -->
+<div class="section-title">Init Flow — Step by Step</div>
+<p class="section-desc">What happens when you run <code style="color:var(--accent2);">apex-bootstrap init -p "My APEX App"</code></p>
+
+<div class="flow-diagram">
+  <div class="flow-line"></div>
+
+  <!-- Step 1 -->
+  <div class="flow-step">
+    <div class="flow-content">
+      <div class="flow-title"><span class="icon">🔍</span> Prerequisites Check</div>
+      <div class="flow-details">
+        Scans system for all required tools and auto-installs anything missing.
+        <ul>
+          <li>Checks for: docker, docker-compose, git, curl, jq, rsync, sql (SQLcl), unzip, wget, perl</li>
+          <li>macOS → installs via Homebrew (installs Homebrew if needed)</li>
+          <li>Linux → installs via apt-get with sudo</li>
+          <li>Installs OpenJDK 21 for SQLcl and Jenkins</li>
+          <li>Starts Docker Desktop if not running (macOS)</li>
+        </ul>
+        <span class="flow-tech">bootstrap-cli.ts → checkPrerequisites()</span>
+      </div>
+    </div>
+    <div class="flow-number">1</div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="flow-step">
+    <div class="flow-content">
+      <div class="flow-title"><span class="icon">📦</span> Extract &amp; Template Assets</div>
+      <div class="flow-details">
+        Embedded scaffold assets (base64 in the binary) are extracted and templated.
+        <ul>
+          <li>15MB+ of base64-encoded scaffold files decoded</li>
+          <li>Template variables replaced: <code>__PROJECT_NAME__</code>, <code>__PROJECT_SCHEMA__</code>, <code>__APP_ID__</code>, etc.</li>
+          <li>Text files get variable substitution; binary files get direct decode</li>
+          <li>File permissions preserved from originals</li>
+        </ul>
+        <span class="flow-tech">scaffold-assets.generated.ts → extractAssets()</span>
+      </div>
+    </div>
+    <div class="flow-number">2</div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="flow-step">
+    <div class="flow-content">
+      <div class="flow-title"><span class="icon">🐳</span> Docker Provisioning</div>
+      <div class="flow-details">
+        Starts all infrastructure containers via Docker Compose with health checks.
+        <ul>
+          <li>Oracle Database 23c Free containers (DEV, TEST, optionally PROD)</li>
+          <li>ORDS 25.4.0 containers per environment</li>
+          <li>GitLab CE container for source control</li>
+          <li>Jenkins LTS container for CI/CD</li>
+          <li>Port conflict detection → auto-finds next available ports</li>
+          <li>Health-check polling until all databases report ready</li>
+        </ul>
+        <span class="flow-tech">docker.ts → dockerComposeUp() + waitForHealth()</span>
+      </div>
+    </div>
+    <div class="flow-number">3</div>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="flow-step">
+    <div class="flow-content">
+      <div class="flow-title"><span class="icon">🗄️</span> Database Bootstrap</div>
+      <div class="flow-details">
+        Provisions schemas, workspaces, and connections inside each Oracle container.
+        <ul>
+          <li>Creates application schema &amp; tablespace via SQLcl</li>
+          <li>Creates APEX workspace linked to schema</li>
+          <li>Configures ORDS for schema REST access</li>
+          <li>Saves SQLcl named connections (~/.sqlcl/connections/)</li>
+          <li>Sets up SYS and APP connection strings</li>
+        </ul>
+        <span class="flow-tech">provision.ts + bootstrap-env.ts → SQL scripts in database/deploy/</span>
+      </div>
+    </div>
+    <div class="flow-number">4</div>
+  </div>
+
+  <!-- Step 5 -->
+  <div class="flow-step">
+    <div class="flow-content">
+      <div class="flow-title"><span class="icon">🚀</span> Application Deployment</div>
+      <div class="flow-details">
+        Installs the APEX application, database objects, and REST modules.
+        <ul>
+          <li>Runs <code>@install_source.sql</code> for all DB objects (tables, views, packages)</li>
+          <li>Imports APEX application export (<code>f1000/install.sql</code>)</li>
+          <li>Installs ORDS REST modules (<code>api.sql</code>)</li>
+          <li>Deploys to DEV first, then replicates to TEST/PROD</li>
+        </ul>
+        <span class="flow-tech">deploy.ts → runSqlcl("@install_source.sql")</span>
+      </div>
+    </div>
+    <div class="flow-number">5</div>
+  </div>
+
+  <!-- Step 6 -->
+  <div class="flow-step">
+    <div class="flow-content">
+      <div class="flow-title"><span class="icon">📂</span> Project Seed &amp; Git Init</div>
+      <div class="flow-details">
+        Initializes the project repo from templates with full variable substitution.
+        <ul>
+          <li>Exports SQLcl project metadata</li>
+          <li>Rsyncs vendor directories into repo structure</li>
+          <li>Template substitution across all text files in starter-template/</li>
+          <li>Git init → initial commit → push to local GitLab</li>
+          <li>Branch protection rules applied (develop, test, main)</li>
+        </ul>
+        <span class="flow-tech">seed-repo.ts → git init + gitlab.ts → createProject()</span>
+      </div>
+    </div>
+    <div class="flow-number">6</div>
+  </div>
+
+  <!-- Step 7 -->
+  <div class="flow-step">
+    <div class="flow-content">
+      <div class="flow-title"><span class="icon">⚙️</span> CI/CD Wiring</div>
+      <div class="flow-details">
+        Creates Jenkins jobs and GitLab webhooks for automated pipelines.
+        <ul>
+          <li>Creates Jenkins jobs: feature/*, develop, test, main branches</li>
+          <li>Configures GitLab → Jenkins webhooks for push events</li>
+          <li>Pipeline stages: checkout → deploy DB → import APEX → run tests</li>
+          <li>Approval gate for production (main branch) deployments</li>
+          <li>Writes <code>local-bootstrap.json</code> with full infrastructure report</li>
+        </ul>
+        <span class="flow-tech">delivery.ts + jenkins.ts + gitlab.ts</span>
+      </div>
+    </div>
+    <div class="flow-number">7</div>
+  </div>
+
+  <!-- Step 8 -->
+  <div class="flow-step">
+    <div class="flow-content">
+      <div class="flow-title"><span class="icon">🛠️</span> Dev Tools &amp; Skills</div>
+      <div class="flow-details">
+        Installs companion skills and configures Claude Code integration.
+        <ul>
+          <li>Clones oracle-db-skills for database development assistance</li>
+          <li>Clones apex-component-modifier for APEX page editing</li>
+          <li>Configures MCP server for SQLcl ↔ Claude Code bridge</li>
+          <li>Displays final URLs: APEX app, ORDS, GitLab, Jenkins</li>
+        </ul>
+        <span class="flow-tech">bootstrap-cli.ts → installSkills()</span>
+      </div>
+    </div>
+    <div class="flow-number">8</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ DOCKER NETWORK ═══════════════════ -->
+<div class="section-title">Docker Network Architecture</div>
+<p class="section-desc">Isolated networks per environment with port mapping to the host.</p>
+
+<div class="docker-diagram">
+  <div class="env-row">
+    <div class="env-block dev">
+      <div class="env-label">● Development</div>
+      <div class="net-label">network: dev-net</div>
+      <div class="svc">
+        <div class="svc-info">
+          <div class="svc-name">Oracle DB 23c</div>
+          <div class="svc-img">container-registry.oracle.com/database/free:23.26</div>
+        </div>
+        <div class="svc-port">:1521</div>
+      </div>
+      <div class="svc">
+        <div class="svc-info">
+          <div class="svc-name">ORDS 25.4</div>
+          <div class="svc-img">container-registry.oracle.com/database/ords:25.4.0</div>
+        </div>
+        <div class="svc-port">:8181 / :8443</div>
+      </div>
+    </div>
+
+    <div class="env-block test">
+      <div class="env-label">● Testing</div>
+      <div class="net-label">network: test-net</div>
+      <div class="svc">
+        <div class="svc-info">
+          <div class="svc-name">Oracle DB 23c</div>
+          <div class="svc-img">container-registry.oracle.com/database/free:23.26</div>
+        </div>
+        <div class="svc-port">:15221</div>
+      </div>
+      <div class="svc">
+        <div class="svc-info">
+          <div class="svc-name">ORDS 25.4</div>
+          <div class="svc-img">container-registry.oracle.com/database/ords:25.4.0</div>
+        </div>
+        <div class="svc-port">:8281 / :8444</div>
+      </div>
+    </div>
+
+    <div class="env-block prod">
+      <div class="env-label">● Production</div>
+      <div class="net-label">network: prod-net (optional)</div>
+      <div class="svc">
+        <div class="svc-info">
+          <div class="svc-name">Oracle DB 23c</div>
+          <div class="svc-img">container-registry.oracle.com/database/free:23.26</div>
+        </div>
+        <div class="svc-port">:15231</div>
+      </div>
+      <div class="svc">
+        <div class="svc-info">
+          <div class="svc-name">ORDS 25.4</div>
+          <div class="svc-img">container-registry.oracle.com/database/ords:25.4.0</div>
+        </div>
+        <div class="svc-port">:8381 / :8445</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="env-row">
+    <div class="env-block cicd">
+      <div class="env-label">● CI/CD Infrastructure</div>
+      <div class="net-label">network: ci-net (bridged to all env networks)</div>
+      <div class="svc">
+        <div class="svc-info">
+          <div class="svc-name">GitLab CE</div>
+          <div class="svc-img">gitlab/gitlab-ce:latest</div>
+        </div>
+        <div class="svc-port">:8929</div>
+      </div>
+      <div class="svc">
+        <div class="svc-info">
+          <div class="svc-name">Jenkins LTS</div>
+          <div class="svc-img">jenkins/jenkins:lts-jdk21</div>
+        </div>
+        <div class="svc-port">:8088</div>
+      </div>
+      <div class="svc">
+        <div class="svc-info">
+          <div class="svc-name">Playwright Runner</div>
+          <div class="svc-img">mcr.microsoft.com/playwright:v1.58.2-noble</div>
+        </div>
+        <div class="svc-port">on-demand</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CONFIG DERIVATION ═══════════════════ -->
+<div class="section-title">Project Config Derivation</div>
+<p class="section-desc">A single project name input generates all identifiers, schemas, ports, and paths automatically.</p>
+
+<div class="config-flow">
+  <div class="config-input">
+    <code>"My APEX App"</code>
+  </div>
+  <div class="config-arrow">⬇</div>
+  <div class="derived-grid">
+    <div class="derived-item">
+      <span class="derived-key">slug</span>
+      <span class="derived-val">my-apex-app</span>
+    </div>
+    <div class="derived-item">
+      <span class="derived-key">codified</span>
+      <span class="derived-val">MY_APEX_APP</span>
+    </div>
+    <div class="derived-item">
+      <span class="derived-key">projectSchema</span>
+      <span class="derived-val">MY_APEX_APP_APP</span>
+    </div>
+    <div class="derived-item">
+      <span class="derived-key">projectWorkspace</span>
+      <span class="derived-val">MY_APEX_APP</span>
+    </div>
+    <div class="derived-item">
+      <span class="derived-key">projectTablespace</span>
+      <span class="derived-val">tbs_my_apex_app_app</span>
+    </div>
+    <div class="derived-item">
+      <span class="derived-key">projectAppId</span>
+      <span class="derived-val">1000</span>
+    </div>
+    <div class="derived-item">
+      <span class="derived-key">DEV container</span>
+      <span class="derived-val">local-my-apex-app-dev</span>
+    </div>
+    <div class="derived-item">
+      <span class="derived-key">TEST container</span>
+      <span class="derived-val">local-my-apex-app-test</span>
+    </div>
+    <div class="derived-item">
+      <span class="derived-key">DEV connection</span>
+      <span class="derived-val">my-apex-app-dev</span>
+    </div>
+    <div class="derived-item">
+      <span class="derived-key">SYS connection</span>
+      <span class="derived-val">my-apex-app-dev-sys</span>
+    </div>
+    <div class="derived-item">
+      <span class="derived-key">ORDS URL path</span>
+      <span class="derived-val">/ords/r/my_apex_app/my_apex_app</span>
+    </div>
+    <div class="derived-item">
+      <span class="derived-key">APP connect string</span>
+      <span class="derived-val">MY_APEX_APP_APP/***@localhost:1521/FREEPDB1</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CI/CD PIPELINE ═══════════════════ -->
+<div class="section-title">CI/CD Pipeline Stages</div>
+<p class="section-desc">Triggered by GitLab webhook on every push. Runs inside a Docker CI container with full DB connectivity.</p>
+
+<div class="pipeline">
+  <div class="pipeline-stage">
+    <div class="stage-icon">📥</div>
+    <div class="stage-name">Checkout</div>
+    <div class="stage-detail">git clone from<br>local GitLab</div>
+  </div>
+  <div class="pipeline-stage">
+    <div class="stage-icon">🗄️</div>
+    <div class="stage-name">Deploy DB</div>
+    <div class="stage-detail">@install_source.sql<br>tables, views, pkgs</div>
+  </div>
+  <div class="pipeline-stage">
+    <div class="stage-icon">📱</div>
+    <div class="stage-name">Import APEX</div>
+    <div class="stage-detail">@f1000/install.sql<br>application import</div>
+  </div>
+  <div class="pipeline-stage">
+    <div class="stage-icon">🔌</div>
+    <div class="stage-name">ORDS Modules</div>
+    <div class="stage-detail">@api.sql<br>REST endpoints</div>
+  </div>
+  <div class="pipeline-stage">
+    <div class="stage-icon">🧪</div>
+    <div class="stage-name">Test</div>
+    <div class="stage-detail">utPLSQL + Playwright<br>unit &amp; e2e tests</div>
+  </div>
+  <div class="pipeline-stage">
+    <div class="stage-icon">✅</div>
+    <div class="stage-name">Approve</div>
+    <div class="stage-detail">manual gate<br>(main → prod only)</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODULE ARCHITECTURE ═══════════════════ -->
+<div class="section-title">Source Module Architecture</div>
+<p class="section-desc">TypeScript modules compiled to a single Bun executable. Each module owns a specific concern.</p>
+
+<div class="modules-grid">
+  <div class="module-card">
+    <div class="module-file">bootstrap-cli.ts</div>
+    <div class="module-name">CLI Entry Point</div>
+    <div class="module-role">Command router, argument parsing, prerequisites checking, asset extraction orchestrator. The main 84KB file that ties everything together.</div>
+    <span class="module-tag tag-core">Core</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">init.ts</div>
+    <div class="module-name">Init Orchestrator</div>
+    <div class="module-role">Runs the full "init" pipeline: provision → deploy → seed-repo → delivery. Coordinates all other modules in sequence.</div>
+    <span class="module-tag tag-core">Core</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">add.ts</div>
+    <div class="module-name">Add Orchestrator</div>
+    <div class="module-role">Discovers running infrastructure from Docker, finds next available APP_ID, and adds a new project to existing containers.</div>
+    <span class="module-tag tag-core">Core</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">docker.ts</div>
+    <div class="module-name">Docker Manager</div>
+    <div class="module-role">Docker Compose orchestration, health-check polling, port allocation and conflict detection, container lifecycle management.</div>
+    <span class="module-tag tag-infra">Infrastructure</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">provision.ts</div>
+    <div class="module-name">DB Provisioner</div>
+    <div class="module-role">Database environment setup: schema creation, APEX workspace setup, ORDS configuration, tablespace management.</div>
+    <span class="module-tag tag-db">Database</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">bootstrap-env.ts</div>
+    <div class="module-name">Workspace Bootstrap</div>
+    <div class="module-role">APEX workspace and application initialization via SQL. Creates the workspace, assigns schemas, sets up APEX app identity.</div>
+    <span class="module-tag tag-db">Database</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">deploy.ts</div>
+    <div class="module-name">App Deployer</div>
+    <div class="module-role">Initial APEX application deployment: runs install scripts for DB objects, imports APEX app export, installs ORDS modules.</div>
+    <span class="module-tag tag-db">Database</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">gitlab.ts</div>
+    <div class="module-name">GitLab API Client</div>
+    <div class="module-role">Full GitLab REST API integration: project creation, webhook management, access tokens, branch protection, clone URLs.</div>
+    <span class="module-tag tag-cicd">CI/CD</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">jenkins.ts</div>
+    <div class="module-name">Jenkins API Client</div>
+    <div class="module-role">Jenkins REST API: job creation from XML templates, build triggering, build status monitoring, approval gate configuration.</div>
+    <span class="module-tag tag-cicd">CI/CD</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">delivery.ts</div>
+    <div class="module-name">CI/CD Orchestrator</div>
+    <div class="module-role">Wires GitLab and Jenkins together: creates webhooks, configures pipeline jobs for all branch patterns, writes bootstrap report.</div>
+    <span class="module-tag tag-cicd">CI/CD</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">seed-repo.ts</div>
+    <div class="module-name">Repo Seeder</div>
+    <div class="module-role">Template extraction, variable substitution across all files, vendor directory sync, git init, initial commit and push.</div>
+    <span class="module-tag tag-core">Core</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">project-config.ts</div>
+    <div class="module-name">Config Deriver</div>
+    <div class="module-role">Derives all identifiers from project name: slugs, schema names, connection strings, ports, container names, ORDS paths.</div>
+    <span class="module-tag tag-util">Utility</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">sql.ts</div>
+    <div class="module-name">SQLcl Runner</div>
+    <div class="module-role">SQLcl subprocess management, command construction for both host and Docker execution, output parsing and error handling.</div>
+    <span class="module-tag tag-db">Database</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">connections.ts</div>
+    <div class="module-name">Connection Resolver</div>
+    <div class="module-role">Resolves SQLcl connection strings for all environments, handles host vs. Docker networking (localhost vs. host.docker.internal).</div>
+    <span class="module-tag tag-db">Database</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">progress.ts</div>
+    <div class="module-name">Progress UI</div>
+    <div class="module-role">Terminal progress tracker with ANSI colors, step/sub-step tracking, timing, and formatted status output.</div>
+    <span class="module-tag tag-util">Utility</span>
+  </div>
+  <div class="module-card">
+    <div class="module-file">bootstrap-state.ts</div>
+    <div class="module-name">State Tracker</div>
+    <div class="module-role">Persistent JSON state at ~/.apex-bootstrap/state.json. Tracks installed tools, repos, and logs for clean uninstallation.</div>
+    <span class="module-tag tag-util">Utility</span>
+  </div>
+</div>
+
+<!-- ═══════════════════ STATE TRACKING ═══════════════════ -->
+<div class="section-title">Persistent State Tracking</div>
+<p class="section-desc">Stored at <code style="color:var(--accent5);">~/.apex-bootstrap/state.json</code> — enables clean uninstallation of only what bootstrap installed.</p>
+
+<div class="state-block">
+  {<br>
+  &nbsp;&nbsp;<span class="key">"homebrewInstalledByBootstrap"</span>: <span class="val">true</span>,&nbsp;&nbsp;<span class="comment">// Did we install Homebrew?</span><br>
+  &nbsp;&nbsp;<span class="key">"dockerDesktopInstalledByBootstrap"</span>: <span class="val">false</span>,&nbsp;&nbsp;<span class="comment">// Pre-existing Docker</span><br>
+  &nbsp;&nbsp;<span class="key">"linuxDockerInstalledByBootstrap"</span>: <span class="val">false</span>,<br>
+  &nbsp;&nbsp;<span class="key">"brewFormulae"</span>: [<span class="val">"sqlcl"</span>, <span class="val">"openjdk@21"</span>, <span class="val">"jq"</span>, ...],&nbsp;&nbsp;<span class="comment">// Only formulae WE installed</span><br>
+  &nbsp;&nbsp;<span class="key">"brewCasks"</span>: [],<br>
+  &nbsp;&nbsp;<span class="key">"repoDirs"</span>: [<span class="val">"/Users/dev/projects/my-apex-app"</span>],<br>
+  &nbsp;&nbsp;<span class="key">"logFiles"</span>: [<span class="val">"/Users/dev/projects/my-apex-app/.bootstrap/apex-bootstrap.log"</span>]<br>
+  }
+</div>
+
+<!-- ═══════════════════ KEY FEATURES ═══════════════════ -->
+<div class="section-title">Key Features</div>
+
+<div class="features-grid">
+  <div class="feature-card">
+    <div class="feature-icon">🎯</div>
+    <div class="feature-name">Single Binary Distribution</div>
+    <div class="feature-desc">Compiled with Bun into one executable with all scaffold assets embedded as base64. Hand it to a colleague — no dependencies, no setup steps.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🌍</div>
+    <div class="feature-name">Multi-Environment</div>
+    <div class="feature-desc">DEV, TEST, and optional PROD environments with isolated Docker networks, separate database containers, and independent ORDS instances.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🔄</div>
+    <div class="feature-name">Multi-Project Support</div>
+    <div class="feature-desc">Run <code>add</code> to spin up additional APEX apps on the same infrastructure. Auto-discovers containers and allocates unique APP_IDs.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🖥️</div>
+    <div class="feature-name">Cross-Platform</div>
+    <div class="feature-desc">Works on macOS (Homebrew) and Linux (apt-get). Detects platform, handles sudo, manages Docker Desktop vs. Docker Engine differences.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🧪</div>
+    <div class="feature-name">Testing Built-In</div>
+    <div class="feature-desc">utPLSQL for PL/SQL unit tests and Playwright for browser-based APEX smoke tests. Both wired into CI pipeline from day one.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🤖</div>
+    <div class="feature-name">Claude Code Integration</div>
+    <div class="feature-desc">Installs oracle-db-skills and apex-component-modifier skills, configures MCP server for SQLcl, enabling AI-assisted Oracle development.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🧹</div>
+    <div class="feature-name">Clean Uninstall</div>
+    <div class="feature-desc">State tracking ensures uninstall only removes what bootstrap installed. Your pre-existing tools and Docker images stay untouched.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🔐</div>
+    <div class="feature-name">Port Conflict Resolution</div>
+    <div class="feature-desc">Automatically detects port conflicts and finds the next available port via TCP bind testing. No more manual port juggling.</div>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  APEX Bootstrap Architecture Diagram &mdash; Generated from codebase analysis of wk2026-bootstrap-cli
+</div>
+
+</body>
+</html>
