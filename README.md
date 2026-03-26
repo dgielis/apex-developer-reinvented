@@ -76,7 +76,7 @@ Run the executable for your platform
                                                       Add project to running infra
   apex-bootstrap uninstall [--yes]                    Remove bootstrap-owned state
   apex-bootstrap docker-clean [--yes]                 Nuke all Docker state (except images)
-  apex-bootstrap -p NAME                                Backwards compat → init
+  apex-bootstrap -p NAME                              Backwards compat → init
   apex-bootstrap vk                                   Install Vibe Kanban Board dependencies
 
 Options:
