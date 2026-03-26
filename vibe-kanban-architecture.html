@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vibe Kanban — Complete Architecture Diagram</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --orange: #d29922;
+    --red: #f85149;
+    --purple: #bc8cff;
+    --cyan: #39d2c0;
+    --pink: #f778ba;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; overflow-x: auto; }
+
+  .header { text-align: center; padding: 40px 20px 20px; }
+  .header h1 { font-size: 2.2rem; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header p { color: var(--muted); margin-top: 8px; font-size: 1rem; max-width: 800px; margin-inline: auto; }
+
+  /* Tab Navigation */
+  .tabs { display: flex; justify-content: center; gap: 8px; padding: 20px; flex-wrap: wrap; }
+  .tab-btn { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all .2s; }
+  .tab-btn:hover { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tab-content { display: none; padding: 20px; max-width: 1400px; margin: 0 auto; }
+  .tab-content.active { display: block; }
+
+  /* ── KANBAN BOARD TAB ── */
+  .kanban-scroll { overflow-x: auto; padding-bottom: 20px; }
+  .kanban-board { display: flex; gap: 12px; min-width: max-content; }
+  .lane { background: var(--card); border: 1px solid var(--border); border-radius: 12px; min-width: 200px; max-width: 220px; flex-shrink: 0; }
+  .lane-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .lane-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .lane-header h3 { font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+  .lane-body { padding: 10px; min-height: 120px; }
+  .lane-card { background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; font-size: 0.75rem; line-height: 1.4; }
+  .lane-card .tag { display: inline-block; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-top: 4px; }
+
+  /* Arrow between lanes */
+  .lane-arrow { display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--muted); flex-shrink: 0; min-width: 24px; }
+
+  /* ── FLOW DIAGRAM TAB ── */
+  .flow-container { position: relative; }
+  .flow-row { display: flex; align-items: stretch; gap: 0; margin-bottom: 0; }
+  .flow-node { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; flex: 1; min-width: 0; position: relative; }
+  .flow-node h3 { font-size: 0.95rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .flow-node ul { list-style: none; padding: 0; }
+  .flow-node li { font-size: 0.8rem; color: var(--muted); padding: 4px 0; padding-left: 16px; position: relative; }
+  .flow-node li::before { content: '→'; position: absolute; left: 0; color: var(--accent); }
+  .flow-connector { display: flex; align-items: center; justify-content: center; padding: 10px 0; }
+  .flow-connector .arrow-down { width: 2px; height: 40px; background: var(--border); position: relative; }
+  .flow-connector .arrow-down::after { content: '▼'; position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); color: var(--accent); font-size: 0.9rem; }
+
+  /* ── DETAIL CARDS ── */
+  .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
+  .detail-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+  .detail-card h3 { font-size: 1.05rem; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  .detail-card .badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
+  .detail-card p, .detail-card li { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+  .detail-card ul { list-style: none; padding: 0; }
+  .detail-card li { padding: 5px 0 5px 18px; position: relative; }
+  .detail-card li::before { content: '•'; position: absolute; left: 0; color: var(--accent); font-weight: bold; }
+  .detail-card .sub { font-size: 0.75rem; color: var(--muted); margin-top: 10px; padding: 10px; background: rgba(255,255,255,.03); border-radius: 8px; font-family: 'SF Mono', monospace; white-space: pre-wrap; }
+
+  /* ── TRANSITION TABLE ── */
+  .transition-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; }
+  .transition-table th { background: rgba(88,166,255,.1); color: var(--accent); text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .transition-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .transition-table tr:hover td { background: rgba(255,255,255,.02); }
+  .transition-table .from-col { color: var(--orange); font-weight: 600; white-space: nowrap; }
+  .transition-table .to-col { color: var(--green); font-weight: 600; white-space: nowrap; }
+  .transition-table .trigger-col { color: var(--purple); }
+  .transition-table .effect-col { color: var(--muted); line-height: 1.5; }
+
+  /* ── SVG PIPELINE ── */
+  .pipeline-wrapper { overflow-x: auto; padding: 20px 0; }
+  .pipeline-svg { display: block; margin: 0 auto; }
+
+  /* Misc */
+  .section-title { font-size: 1.3rem; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 20px 0; padding: 16px; background: var(--card); border-radius: 10px; border: 1px solid var(--border); }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--muted); }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+  .emoji { font-size: 1.1em; }
+  .highlight { color: var(--accent); }
+  .highlight-green { color: var(--green); }
+  .highlight-orange { color: var(--orange); }
+  .highlight-red { color: var(--red); }
+  .highlight-purple { color: var(--purple); }
+  .highlight-cyan { color: var(--cyan); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Vibe Kanban — Complete System Architecture</h1>
+  <p>An AI-powered project management platform that integrates coding agents (Claude Code, Codex, Gemini, Copilot, Cursor, and more) to automate the full lifecycle: planning, coding, reviewing, merging, and deploying.</p>
+</div>
+
+<!-- ─── TAB NAV ─── -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('board')">Kanban Board</button>
+  <button class="tab-btn" onclick="showTab('pipeline')">Pipeline Flow</button>
+  <button class="tab-btn" onclick="showTab('transitions')">Lane Transitions</button>
+  <button class="tab-btn" onclick="showTab('services')">Services &amp; Executors</button>
+  <button class="tab-btn" onclick="showTab('pdb')">Oracle PDB Lifecycle</button>
+  <button class="tab-btn" onclick="showTab('data')">Data Model</button>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- TAB 1: KANBAN BOARD                         -->
+<!-- ════════════════════════════════════════════ -->
+<div id="tab-board" class="tab-content active">
+  <h2 class="section-title">The Kanban Board — 11 Lanes</h2>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:hsl(220,9%,46%)"></div> Backlog</div>
+    <div class="legend-item"><div class="legend-dot" style="background:hsl(217,91%,60%)"></div> To Do</div>
+    <div class="legend-item"><div class="legend-dot" style="background:hsl(270,60%,55%)"></div> Planning Done</div>
+    <div class="legend-item"><div class="legend-dot" style="background:hsl(38,92%,50%)"></div> In Progress</div>
+    <div class="legend-item"><div class="legend-dot" style="background:hsl(258,90%,66%)"></div> In Review</div>
+    <div class="legend-item"><div class="legend-dot" style="background:hsl(38,92%,50%)"></div> Merging</div>
+    <div class="legend-item"><div class="legend-dot" style="background:hsl(150,60%,40%)"></div> Merged to Dev</div>
+    <div class="legend-item"><div class="legend-dot" style="background:hsl(280,65%,55%)"></div> Ready to Release</div>
+    <div class="legend-item"><div class="legend-dot" style="background:hsl(190,80%,50%)"></div> On Test</div>
+    <div class="legend-item"><div class="legend-dot" style="background:hsl(142,71%,45%)"></div> Done</div>
+    <div class="legend-item"><div class="legend-dot" style="background:hsl(0,84%,60%)"></div> Cancelled (hidden)</div>
+  </div>
+
+  <div class="kanban-scroll">
+    <div class="kanban-board">
+
+      <!-- BACKLOG -->
+      <div class="lane">
+        <div class="lane-header">
+          <div class="lane-dot" style="background:hsl(220,9%,46%)"></div>
+          <h3>Backlog</h3>
+        </div>
+        <div class="lane-body">
+          <div class="lane-card">
+            <strong>Auto-Enrichment</strong><br>
+            When an issue lands here, a background LLM call classifies it:
+            <span class="tag" style="background:rgba(88,166,255,.15);color:var(--accent)">category</span>
+            <span class="tag" style="background:rgba(188,140,255,.15);color:var(--purple)">type</span>
+            <span class="tag" style="background:rgba(210,153,34,.15);color:var(--orange)">estimate</span>
+            <span class="tag" style="background:rgba(63,185,80,.15);color:var(--green)">assignee</span>
+          </div>
+          <div class="lane-card" style="border-color:rgba(88,166,255,.3)">
+            Issues sit here until triaged. No agent workspace is created yet.
+          </div>
+        </div>
+      </div>
+
+      <div class="lane-arrow">&#10132;</div>
+
+      <!-- TO DO -->
+      <div class="lane">
+        <div class="lane-header">
+          <div class="lane-dot" style="background:hsl(217,91%,60%)"></div>
+          <h3>To Do</h3>
+        </div>
+        <div class="lane-body">
+          <div class="lane-card">
+            <strong>Planning Agent Spawns</strong><br>
+            An ExecutionProcess starts. The AI agent reads the issue, explores the codebase, and writes a <code>PLAN.md</code>.
+          </div>
+          <div class="lane-card">
+            <code style="color:var(--purple)">planning_status: "running"</code><br>
+            On success &rarr; auto-moves to <em>Planning Done</em>.<br>
+            On failure &rarr; stays; user can retry.
+          </div>
+        </div>
+      </div>
+
+      <div class="lane-arrow">&#10132;</div>
+
+      <!-- PLANNING DONE -->
+      <div class="lane">
+        <div class="lane-header">
+          <div class="lane-dot" style="background:hsl(270,60%,55%)"></div>
+          <h3>Planning Done</h3>
+        </div>
+        <div class="lane-body">
+          <div class="lane-card">
+            <strong>Plan Ready</strong><br>
+            The <code>PLAN.md</code> is stored in <code>extension_metadata.plan</code>. User can review/edit before triggering coding.
+          </div>
+        </div>
+      </div>
+
+      <div class="lane-arrow">&#10132;</div>
+
+      <!-- IN PROGRESS -->
+      <div class="lane">
+        <div class="lane-header">
+          <div class="lane-dot" style="background:hsl(38,92%,50%)"></div>
+          <h3>In Progress</h3>
+        </div>
+        <div class="lane-body">
+          <div class="lane-card">
+            <strong>Coding Agent Spawns</strong><br>
+            A full dev workspace is created: Docker container, <strong>Oracle PDB clone</strong> (<code>DEV_{id}_{rand}</code>) from <code>freepdb1</code> template, Git branch. The agent codes against its own isolated database.
+          </div>
+          <div class="lane-card">
+            <code style="color:var(--orange)">coding_status: "running"</code><br>
+            Real-time logs streamed to UI. On success &rarr; moves to <em>In Review</em>.
+          </div>
+        </div>
+      </div>
+
+      <div class="lane-arrow">&#10132;</div>
+
+      <!-- IN REVIEW -->
+      <div class="lane">
+        <div class="lane-header">
+          <div class="lane-dot" style="background:hsl(258,90%,66%)"></div>
+          <h3>In Review</h3>
+        </div>
+        <div class="lane-body">
+          <div class="lane-card">
+            <strong>Human Review</strong><br>
+            Code diffs are visible in the UI. The user reviews changes, requests follow-ups, or approves.
+          </div>
+          <div class="lane-card">
+            Supports <em>queued follow-up messages</em> — chain multiple agent runs without waiting.
+          </div>
+        </div>
+      </div>
+
+      <div class="lane-arrow">&#10132;</div>
+
+      <!-- MERGING -->
+      <div class="lane">
+        <div class="lane-header">
+          <div class="lane-dot" style="background:hsl(38,92%,50%)"></div>
+          <h3>Merging</h3>
+        </div>
+        <div class="lane-body">
+          <div class="lane-card">
+            <strong>PR Creation &amp; Merge</strong><br>
+            Creates a Pull Request from coding branch &rarr; <code>develop</code>. Agent writes PR description.
+          </div>
+          <div class="lane-card">
+            <code style="color:var(--orange)">merging_status: "running"</code><br>
+            Stores <code>merging_pr_url</code>, <code>merge_commit_sha</code>. May trigger Jenkins build.
+          </div>
+        </div>
+      </div>
+
+      <div class="lane-arrow">&#10132;</div>
+
+      <!-- MERGED TO DEV -->
+      <div class="lane">
+        <div class="lane-header">
+          <div class="lane-dot" style="background:hsl(150,60%,40%)"></div>
+          <h3>Merged to Dev</h3>
+        </div>
+        <div class="lane-body">
+          <div class="lane-card">
+            <strong>On Develop Branch</strong><br>
+            Code is on <code>develop</code>. PR Monitor auto-archives the workspace. Remote sync pushes status to cloud.
+          </div>
+        </div>
+      </div>
+
+      <div class="lane-arrow">&#10132;</div>
+
+      <!-- READY TO RELEASE -->
+      <div class="lane">
+        <div class="lane-header">
+          <div class="lane-dot" style="background:hsl(280,65%,55%)"></div>
+          <h3>Ready to Release</h3>
+        </div>
+        <div class="lane-body">
+          <div class="lane-card">
+            <strong>Batch Release Gate</strong><br>
+            Issues collect here. When the user clicks <em>"Release to Test"</em>, ALL issues in this lane are cherry-picked onto the <code>test</code> branch in one batch.
+          </div>
+        </div>
+      </div>
+
+      <div class="lane-arrow">&#10132;</div>
+
+      <!-- ON TEST -->
+      <div class="lane">
+        <div class="lane-header">
+          <div class="lane-dot" style="background:hsl(190,80%,50%)"></div>
+          <h3>On Test</h3>
+        </div>
+        <div class="lane-body">
+          <div class="lane-card">
+            <strong>Test Environment</strong><br>
+            Cherry-picked to <code>test</code> branch and pushed. Jenkins test build triggered (if configured). On success &rarr; issues move here automatically.
+          </div>
+        </div>
+      </div>
+
+      <div class="lane-arrow">&#10132;</div>
+
+      <!-- DONE -->
+      <div class="lane">
+        <div class="lane-header">
+          <div class="lane-dot" style="background:hsl(142,71%,45%)"></div>
+          <h3>Done</h3>
+        </div>
+        <div class="lane-body">
+          <div class="lane-card">
+            <strong>Complete</strong><br>
+            Testing verified. Issue lifecycle finished. <code>completed_at</code> timestamp set.
+          </div>
+        </div>
+      </div>
+
+      <div class="lane-arrow" style="color:var(--red)">&#10005;</div>
+
+      <!-- CANCELLED -->
+      <div class="lane" style="opacity:.6">
+        <div class="lane-header">
+          <div class="lane-dot" style="background:hsl(0,84%,60%)"></div>
+          <h3>Cancelled</h3>
+        </div>
+        <div class="lane-body">
+          <div class="lane-card">
+            <strong>Hidden Lane</strong><br>
+            Abandoned work. Hidden from board view; visible in list view.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- TAB 2: PIPELINE FLOW                        -->
+<!-- ════════════════════════════════════════════ -->
+<div id="tab-pipeline" class="tab-content">
+  <h2 class="section-title">End-to-End Pipeline Flow</h2>
+  <p style="color:var(--muted);margin-bottom:24px;font-size:0.9rem;">Each step shows the lane, the trigger, and the automated side effects that fire.</p>
+
+  <div class="pipeline-wrapper">
+    <svg class="pipeline-svg" viewBox="0 0 1100 1720" width="1100" height="1720" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+
+      <!-- Vertical connector line -->
+      <line x1="550" y1="0" x2="550" y2="1720" stroke="#30363d" stroke-width="2" stroke-dasharray="6 4"/>
+
+      <!-- ─── NODE 1: BACKLOG ─── -->
+      <rect x="350" y="20" width="400" height="120" rx="14" fill="#161b22" stroke="#6e7681" stroke-width="1.5"/>
+      <circle cx="380" cy="48" r="7" fill="hsl(220,9%,46%)"/>
+      <text x="396" y="53" fill="#e6edf3" font-size="15" font-weight="700">Backlog</text>
+      <text x="380" y="78" fill="#8b949e" font-size="12">Issue created &rarr; Background LLM classifies:</text>
+      <text x="380" y="96" fill="#58a6ff" font-size="11" font-weight="600">category | type | time_estimate | assignee</text>
+      <text x="380" y="114" fill="#8b949e" font-size="11">No workspace created. Async, non-blocking.</text>
+      <!-- arrow down -->
+      <polygon points="550,150 542,140 558,140" fill="#58a6ff"/>
+
+      <!-- ─── NODE 2: TO DO ─── -->
+      <rect x="300" y="160" width="500" height="140" rx="14" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <circle cx="330" cy="188" r="7" fill="hsl(217,91%,60%)"/>
+      <text x="346" y="193" fill="#e6edf3" font-size="15" font-weight="700">To Do — Planning Phase</text>
+      <text x="330" y="218" fill="#bc8cff" font-size="12" font-weight="600">TRIGGER: Drag issue here (or auto from Backlog)</text>
+      <text x="330" y="238" fill="#8b949e" font-size="12">1. Spawns ExecutionProcess (planning agent)</text>
+      <text x="330" y="254" fill="#8b949e" font-size="12">2. Agent explores codebase + database schema</text>
+      <text x="330" y="270" fill="#8b949e" font-size="12">3. Generates PLAN.md stored in extension_metadata</text>
+      <text x="330" y="286" fill="#3fb950" font-size="11" font-weight="600">ON SUCCESS: Auto-moves to "Planning Done"</text>
+      <polygon points="550,310 542,300 558,300" fill="#58a6ff"/>
+
+      <!-- ─── NODE 3: PLANNING DONE ─── -->
+      <rect x="350" y="320" width="400" height="100" rx="14" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+      <circle cx="380" cy="348" r="7" fill="hsl(270,60%,55%)"/>
+      <text x="396" y="353" fill="#e6edf3" font-size="15" font-weight="700">Planning Done</text>
+      <text x="380" y="378" fill="#8b949e" font-size="12">PLAN.md available for human review.</text>
+      <text x="380" y="396" fill="#8b949e" font-size="12">User can edit plan before triggering coding.</text>
+      <polygon points="550,430 542,420 558,420" fill="#58a6ff"/>
+
+      <!-- ─── NODE 4: IN PROGRESS ─── -->
+      <rect x="280" y="440" width="540" height="160" rx="14" fill="#161b22" stroke="#d29922" stroke-width="1.5"/>
+      <circle cx="310" cy="468" r="7" fill="hsl(38,92%,50%)"/>
+      <text x="326" y="473" fill="#e6edf3" font-size="15" font-weight="700">In Progress — Coding Phase</text>
+      <text x="310" y="498" fill="#bc8cff" font-size="12" font-weight="600">TRIGGER: Drag here (requires plan in metadata)</text>
+      <text x="310" y="518" fill="#8b949e" font-size="12">1. Creates Docker container (local-{repo}-dev)</text>
+      <text x="310" y="534" fill="#d29922" font-size="12" font-weight="600">2. Clones Oracle PDB: CREATE PLUGGABLE DATABASE DEV_xx FROM freepdb1</text>
+      <text x="310" y="550" fill="#8b949e" font-size="12">3. Opens PDB, resets credentials, maps Docker port, creates SQLcl conn</text>
+      <text x="310" y="566" fill="#8b949e" font-size="12">4. Creates Git branch, configures MCP override for agent</text>
+      <text x="310" y="582" fill="#8b949e" font-size="12">5. Coding agent implements plan against isolated PDB (real-time logs)</text>
+      <text x="310" y="598" fill="#3fb950" font-size="11" font-weight="600">ON SUCCESS: Re-export validates PDB → auto-moves to "In Review"</text>
+      <polygon points="550,610 542,600 558,600" fill="#58a6ff"/>
+
+      <!-- ─── NODE 5: IN REVIEW ─── -->
+      <rect x="300" y="620" width="500" height="140" rx="14" fill="#161b22" stroke="#a371f7" stroke-width="1.5"/>
+      <circle cx="330" cy="648" r="7" fill="hsl(258,90%,66%)"/>
+      <text x="346" y="653" fill="#e6edf3" font-size="15" font-weight="700">In Review — Human Review</text>
+      <text x="330" y="678" fill="#8b949e" font-size="12">Code diffs visible in UI. User reviews changes.</text>
+      <text x="330" y="698" fill="#8b949e" font-size="12">Can send follow-up messages to agent (QueuedMessageService).</text>
+      <text x="330" y="718" fill="#8b949e" font-size="12">Approval system gates tool usage (ApprovalService).</text>
+      <text x="330" y="738" fill="#8b949e" font-size="12">User can request more changes or approve for merge.</text>
+      <polygon points="550,770 542,760 558,760" fill="#58a6ff"/>
+
+      <!-- ─── NODE 6: MERGING ─── -->
+      <rect x="280" y="780" width="540" height="160" rx="14" fill="#161b22" stroke="#d29922" stroke-width="1.5"/>
+      <circle cx="310" cy="808" r="7" fill="hsl(38,92%,50%)"/>
+      <text x="326" y="813" fill="#e6edf3" font-size="15" font-weight="700">Merging — PR &amp; Merge Phase</text>
+      <text x="310" y="838" fill="#bc8cff" font-size="12" font-weight="600">TRIGGER: Drag here after review approval</text>
+      <text x="310" y="858" fill="#8b949e" font-size="12">1. Runs cleanup script (CleanupScript context)</text>
+      <text x="310" y="874" fill="#8b949e" font-size="12">2. Creates PR: coding_branch &rarr; develop</text>
+      <text x="310" y="890" fill="#8b949e" font-size="12">3. Agent writes PR description</text>
+      <text x="310" y="906" fill="#8b949e" font-size="12">4. Stores merging_pr_url, merge_commit_sha</text>
+      <text x="310" y="926" fill="#3fb950" font-size="11" font-weight="600">ON SUCCESS: Auto-moves to "Merged to Dev"  |  May trigger Jenkins</text>
+      <polygon points="550,950 542,940 558,940" fill="#58a6ff"/>
+
+      <!-- ─── NODE 7: MERGED TO DEV ─── -->
+      <rect x="320" y="960" width="460" height="120" rx="14" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+      <circle cx="350" cy="988" r="7" fill="hsl(150,60%,40%)"/>
+      <text x="366" y="993" fill="#e6edf3" font-size="15" font-weight="700">Merged to Dev</text>
+      <text x="350" y="1018" fill="#8b949e" font-size="12">Code is on the develop branch.</text>
+      <text x="350" y="1038" fill="#8b949e" font-size="12">PR Monitor detects merge &rarr; auto-archives workspace.</text>
+      <text x="350" y="1058" fill="#8b949e" font-size="12">Remote Sync pushes final state to cloud.</text>
+      <polygon points="550,1090 542,1080 558,1080" fill="#58a6ff"/>
+
+      <!-- ─── NODE 8: READY TO RELEASE ─── -->
+      <rect x="280" y="1100" width="540" height="140" rx="14" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+      <circle cx="310" cy="1128" r="7" fill="hsl(280,65%,55%)"/>
+      <text x="326" y="1133" fill="#e6edf3" font-size="15" font-weight="700">Ready to Release to Test</text>
+      <text x="310" y="1158" fill="#f85149" font-size="12" font-weight="600">BATCH GATE — Issues collect here</text>
+      <text x="310" y="1178" fill="#8b949e" font-size="12">User clicks "Release to Test" button to trigger:</text>
+      <text x="310" y="1198" fill="#8b949e" font-size="12">1. Fetches all issues in this lane</text>
+      <text x="310" y="1214" fill="#8b949e" font-size="12">2. Cherry-picks ALL merge_commit_sha onto test branch</text>
+      <text x="310" y="1230" fill="#8b949e" font-size="12">3. Pushes test branch &rarr; triggers Jenkins test build</text>
+      <polygon points="550,1250 542,1240 558,1240" fill="#58a6ff"/>
+
+      <!-- ─── NODE 9: ON TEST ─── -->
+      <rect x="350" y="1260" width="400" height="100" rx="14" fill="#161b22" stroke="#39d2c0" stroke-width="1.5"/>
+      <circle cx="380" cy="1288" r="7" fill="hsl(190,80%,50%)"/>
+      <text x="396" y="1293" fill="#e6edf3" font-size="15" font-weight="700">On Test</text>
+      <text x="380" y="1318" fill="#8b949e" font-size="12">Running in test environment.</text>
+      <text x="380" y="1338" fill="#8b949e" font-size="12">Jenkins success auto-moves here; manual otherwise.</text>
+      <polygon points="550,1370 542,1360 558,1360" fill="#58a6ff"/>
+
+      <!-- ─── NODE 10: DONE ─── -->
+      <rect x="380" y="1380" width="340" height="80" rx="14" fill="#161b22" stroke="#3fb950" stroke-width="2"/>
+      <circle cx="410" cy="1408" r="7" fill="hsl(142,71%,45%)"/>
+      <text x="426" y="1413" fill="#e6edf3" font-size="15" font-weight="700">Done</text>
+      <text x="410" y="1438" fill="#8b949e" font-size="12">Issue complete. completed_at timestamp set.</text>
+
+      <!-- ─── SIDE: CANCELLED ─── -->
+      <rect x="820" y="700" width="240" height="70" rx="14" fill="#161b22" stroke="#f85149" stroke-width="1" stroke-dasharray="4 3"/>
+      <circle cx="845" cy="723" r="6" fill="hsl(0,84%,60%)"/>
+      <text x="860" y="728" fill="#f85149" font-size="13" font-weight="600">Cancelled</text>
+      <text x="845" y="750" fill="#8b949e" font-size="11">Hidden lane. Drag any issue here to abandon.</text>
+      <line x1="760" y1="735" x2="820" y2="735" stroke="#f85149" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="770" y="728" fill="#f85149" font-size="10">any</text>
+
+      <!-- ─── SIDE: RETRY LOOPS ─── -->
+      <rect x="820" y="200" width="250" height="90" rx="12" fill="rgba(248,81,73,.06)" stroke="#f85149" stroke-width="1"/>
+      <text x="840" y="225" fill="#f85149" font-size="12" font-weight="600">Retry Endpoints</text>
+      <text x="840" y="245" fill="#8b949e" font-size="11">/retry-planning  (re-run plan agent)</text>
+      <text x="840" y="261" fill="#8b949e" font-size="11">/retry-coding    (re-run code agent)</text>
+      <text x="840" y="277" fill="#8b949e" font-size="11">/retry-merging   (re-run PR/merge)</text>
+      <line x1="800" y1="245" x2="820" y2="245" stroke="#f85149" stroke-width="1" stroke-dasharray="3 2"/>
+
+      <!-- ─── SIDE: EXECUTOR AGENTS ─── -->
+      <rect x="10" y="460" width="240" height="180" rx="12" fill="rgba(88,166,255,.05)" stroke="#58a6ff" stroke-width="1"/>
+      <text x="30" y="488" fill="#58a6ff" font-size="13" font-weight="700">Supported Executors</text>
+      <text x="30" y="510" fill="#8b949e" font-size="11">Claude Code  (Anthropic)</text>
+      <text x="30" y="526" fill="#8b949e" font-size="11">Codex        (OpenAI)</text>
+      <text x="30" y="542" fill="#8b949e" font-size="11">Gemini CLI   (Google)</text>
+      <text x="30" y="558" fill="#8b949e" font-size="11">Cursor Agent (Cursor)</text>
+      <text x="30" y="574" fill="#8b949e" font-size="11">GitHub Copilot</text>
+      <text x="30" y="590" fill="#8b949e" font-size="11">Amp | QwenCode | Droid | ACP</text>
+      <text x="30" y="610" fill="#8b949e" font-size="11">OpenCode</text>
+      <text x="30" y="628" fill="#58a6ff" font-size="10" font-weight="600">All share the same executor interface</text>
+      <line x1="250" y1="550" x2="280" y2="550" stroke="#58a6ff" stroke-width="1" stroke-dasharray="3 2"/>
+
+      <!-- ─── SIDE: BACKGROUND SERVICES ─── -->
+      <rect x="10" y="900" width="240" height="160" rx="12" fill="rgba(63,185,80,.05)" stroke="#3fb950" stroke-width="1"/>
+      <text x="30" y="928" fill="#3fb950" font-size="13" font-weight="700">Background Services</text>
+      <text x="30" y="950" fill="#8b949e" font-size="11">EventService  — SSE real-time patches</text>
+      <text x="30" y="966" fill="#8b949e" font-size="11">PrMonitor     — Polls PRs every 60s</text>
+      <text x="30" y="982" fill="#8b949e" font-size="11">RemoteSync    — Cloud state sync</text>
+      <text x="30" y="998" fill="#8b949e" font-size="11">ApprovalSvc   — Gates tool usage</text>
+      <text x="30" y="1014" fill="#8b949e" font-size="11">QueuedMsgSvc  — Chains agent runs</text>
+      <text x="30" y="1030" fill="#8b949e" font-size="11">ContainerSvc  — Docker lifecycle</text>
+      <text x="30" y="1048" fill="#3fb950" font-size="10" font-weight="600">All run as async Tokio tasks</text>
+      <line x1="250" y1="980" x2="320" y2="980" stroke="#3fb950" stroke-width="1" stroke-dasharray="3 2"/>
+
+    </svg>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- TAB 3: LANE TRANSITIONS TABLE               -->
+<!-- ════════════════════════════════════════════ -->
+<div id="tab-transitions" class="tab-content">
+  <h2 class="section-title">Every Lane Transition &amp; Its Side Effects</h2>
+  <p style="color:var(--muted);margin-bottom:20px;font-size:0.9rem;">Comprehensive table of what happens when a ticket is dragged from one lane to another.</p>
+
+  <div style="overflow-x:auto;">
+    <table class="transition-table">
+      <thead>
+        <tr>
+          <th style="width:15%">From</th>
+          <th style="width:15%">To</th>
+          <th style="width:15%">Trigger</th>
+          <th style="width:55%">Automated Side Effects</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="from-col">— (new)</td>
+          <td class="to-col">Backlog</td>
+          <td class="trigger-col">Issue created</td>
+          <td class="effect-col">
+            Background LLM enrichment spawns asynchronously. Classifies the issue into <strong>category</strong> (Bug/Feature/Task), <strong>type</strong> (packages/apex_app/db_objects), <strong>time_estimate</strong> (30m to 1w), and suggests an <strong>assignee</strong>. Results stored in <code>extension_metadata</code>. Non-blocking — UI remains responsive.
+          </td>
+        </tr>
+        <tr>
+          <td class="from-col">Backlog</td>
+          <td class="to-col">To Do</td>
+          <td class="trigger-col">Drag &amp; drop</td>
+          <td class="effect-col">
+            <strong>Planning agent spawns.</strong> An <code>ExecutionProcess</code> is created with a planning prompt. The AI agent: (1) reads the issue title and description, (2) explores the codebase and database schema, (3) generates a <code>PLAN.md</code> file. Sets <code>planning_status: "running"</code> and stores <code>planning_workspace_id</code> + <code>planning_execution_id</code>. Backend polls execution status. <strong>On success:</strong> extracts PLAN.md, stores in metadata, auto-moves to "Planning Done". <strong>On failure:</strong> sets <code>planning_status: "failed"</code>, issue stays.
+          </td>
+        </tr>
+        <tr>
+          <td class="from-col">To Do</td>
+          <td class="to-col">Planning Done</td>
+          <td class="trigger-col">Automatic (on plan success)</td>
+          <td class="effect-col">
+            Automatic transition. <code>planning_status</code> set to <code>"done"</code>. The plan markdown is readable/editable in the UI. No additional processes spawn. This is a human checkpoint — the user reviews the plan before committing to coding.
+          </td>
+        </tr>
+        <tr>
+          <td class="from-col">Planning Done</td>
+          <td class="to-col">In Progress</td>
+          <td class="trigger-col">Drag &amp; drop</td>
+          <td class="effect-col">
+            <strong>Coding agent spawns with full Oracle PDB lifecycle.</strong> Requires a plan in <code>extension_metadata.plan</code> (silently fails without). <strong>SetupScript phase:</strong> (1) Creates Docker container (<code>local-{repo}-dev</code>), (2) <strong>Clones Oracle PDB</strong> from <code>freepdb1</code> template: <code>CREATE PLUGGABLE DATABASE DEV_{id}_{rand} FROM freepdb1</code>, (3) Opens PDB read-write and saves state, (4) Resets <code>wk_app_app</code> user credentials, (5) Maps Docker port 1521 to host, (6) Creates SQLcl named connection (<code>{repo}-dev</code>) pointing to the new PDB, (7) Configures Claude MCP override for SQLcl access, (8) Updates <code>.gitignore</code>. <strong>CodingAgent phase:</strong> Agent connects via named connection and implements the plan against the isolated PDB. <strong>Validation phase:</strong> Re-exports from PDB (<code>project export</code>) and checks git status for drift. <strong>Cleanup phase:</strong> <code>ALTER PLUGGABLE DATABASE ... CLOSE; DROP PLUGGABLE DATABASE ... INCLUDING DATAFILES;</code>, restores original named connection, removes MCP override. Sets <code>coding_status: "running"</code>, stores <code>pdb_name</code>, <code>coding_branch</code>, <code>coding_workspace_id</code>. <strong>On success:</strong> auto-moves to "In Review". <strong>On failure:</strong> PDB still dropped, sets <code>coding_status: "failed"</code>.
+          </td>
+        </tr>
+        <tr>
+          <td class="from-col">In Progress</td>
+          <td class="to-col">In Review</td>
+          <td class="trigger-col">Automatic (on coding success)</td>
+          <td class="effect-col">
+            Automatic transition. <code>coding_status</code> set to <code>"done"</code>. Code diffs become visible in the UI (inline diffs up to 2MB). The <strong>ApprovalService</strong> is active — any tool usage by follow-up agents requires user approval. The <strong>QueuedMessageService</strong> allows chaining additional agent prompts while an execution is still running.
+          </td>
+        </tr>
+        <tr>
+          <td class="from-col">In Review</td>
+          <td class="to-col">Merging</td>
+          <td class="trigger-col">Drag &amp; drop</td>
+          <td class="effect-col">
+            <strong>Merge agent spawns.</strong> (1) Runs cleanup script (<code>CleanupScript</code> context), (2) reads <code>coding_branch</code> from metadata, (3) creates a Pull Request from coding branch to <code>develop</code>, (4) agent generates a PR description, (5) stores <code>merging_pr_url</code> and <code>merge_commit_sha</code>. If Jenkins CI is detected in the repo, triggers a build and stores <code>jenkins_build_url</code>. Sets <code>merging_status: "running"</code>. <strong>On success:</strong> auto-moves to "Merged to Dev". <strong>On failure:</strong> sets <code>merging_status: "failed"</code> with <code>merging_error</code>.
+          </td>
+        </tr>
+        <tr>
+          <td class="from-col">Merging</td>
+          <td class="to-col">Merged to Dev</td>
+          <td class="trigger-col">Automatic (on merge success)</td>
+          <td class="effect-col">
+            Automatic transition. The <strong>PR Monitor Service</strong> (polling every 60s) detects the PR has been merged and <strong>auto-archives the workspace</strong>. The <strong>Remote Sync Service</strong> pushes the final workspace state to the cloud (files changed, lines added/removed). The workspace's Docker container and dev database can be cleaned up.
+          </td>
+        </tr>
+        <tr>
+          <td class="from-col">Merged to Dev</td>
+          <td class="to-col">Ready to Release</td>
+          <td class="trigger-col">Drag &amp; drop</td>
+          <td class="effect-col">
+            <strong>No automation.</strong> Simple status change. Issues collect in this lane as a batch gate. The <code>merge_commit_sha</code> in each issue's metadata is critical — it will be used in the release-to-test cherry-pick operation.
+          </td>
+        </tr>
+        <tr>
+          <td class="from-col">Ready to Release</td>
+          <td class="to-col">On Test</td>
+          <td class="trigger-col">"Release to Test" button</td>
+          <td class="effect-col">
+            <strong>Batch release operation</strong> (not individual drag). Endpoint: <code>POST /projects/{id}/release-to-test</code>. (1) Fetches ALL issues in "Ready to Release" status, (2) extracts each issue's <code>merge_commit_sha</code>, (3) fetches origin, (4) checks out/creates the <code>test</code> branch, (5) pulls latest test, (6) cherry-picks ALL merge commits onto test, (7) pushes to <code>origin/test</code>, (8) returns to develop. If Jenkins config exists: triggers test build, polls for result. <strong>On Jenkins success:</strong> batch-moves all issues to "On Test". <strong>On failure:</strong> issues stay in "Ready to Release". <strong>Without Jenkins:</strong> moves directly to "On Test".
+          </td>
+        </tr>
+        <tr>
+          <td class="from-col">On Test</td>
+          <td class="to-col">Done</td>
+          <td class="trigger-col">Drag &amp; drop</td>
+          <td class="effect-col">
+            <strong>No automation.</strong> Manual confirmation that testing passed. Sets <code>completed_at</code> timestamp. Issue lifecycle complete.
+          </td>
+        </tr>
+        <tr>
+          <td class="from-col">Any lane</td>
+          <td class="to-col">Cancelled</td>
+          <td class="trigger-col">Drag &amp; drop</td>
+          <td class="effect-col">
+            Issue is abandoned. The "Cancelled" lane is hidden from the kanban board (visible in list view only). Any running execution processes for the issue are not automatically killed — the user should stop them manually via the workspace UI.
+          </td>
+        </tr>
+        <tr>
+          <td class="from-col">Any lane</td>
+          <td class="to-col">Any lane (same)</td>
+          <td class="trigger-col">Drag within lane</td>
+          <td class="effect-col">
+            <strong>Reorder only.</strong> Only works when sort mode is <code>sort_order</code> (manual). Recalculates <code>sort_order</code> using formula: <code>1000 * column_index + issue_index</code>. No status change, no automation triggered. Sends bulk update API call.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- TAB 4: SERVICES & EXECUTORS                 -->
+<!-- ════════════════════════════════════════════ -->
+<div id="tab-services" class="tab-content">
+  <h2 class="section-title">Backend Services &amp; Executor Architecture</h2>
+
+  <div class="detail-grid">
+
+    <div class="detail-card">
+      <h3><span style="color:var(--accent)">&#9881;</span> Executor System</h3>
+      <p>The pluggable engine that runs AI coding agents. All executors implement the same interface and can be swapped per workspace.</p>
+      <ul>
+        <li><strong class="highlight">Claude Code</strong> — Anthropic (npx-based, v2.1.62)</li>
+        <li><strong class="highlight">Codex</strong> — OpenAI's coding agent</li>
+        <li><strong class="highlight">Gemini CLI</strong> — Google's AI agent</li>
+        <li><strong class="highlight">Cursor Agent</strong> — with MCP server support</li>
+        <li><strong class="highlight">GitHub Copilot</strong> — GitHub's assistant</li>
+        <li><strong class="highlight">Amp</strong> — session forking support</li>
+        <li><strong class="highlight">QwenCode</strong> — Alibaba's agent</li>
+        <li><strong class="highlight">OpenCode / Droid / ACP</strong> — additional agents</li>
+      </ul>
+      <div class="sub">Action Types:
+CodingAgentInitialRequest  — First prompt
+CodingAgentFollowUpRequest — Continue session
+ScriptRequest              — Shell scripts
+ReviewRequest              — Code review</div>
+    </div>
+
+    <div class="detail-card">
+      <h3><span style="color:var(--green)">&#9889;</span> EventService (Real-time)</h3>
+      <p>Hooks into SQLite write operations and broadcasts JSON patches via Server-Sent Events (SSE).</p>
+      <ul>
+        <li>Monitors: workspaces, execution_processes, sessions, coding_agent_turns, kanban tables</li>
+        <li>Pre-update hooks detect deletions and push removal patches</li>
+        <li>Update hooks push full record patches on INSERT/UPDATE</li>
+        <li>Kanban tables get lightweight notification patches (just timestamps)</li>
+        <li>Uses RwLock + broadcast channels for fan-out</li>
+      </ul>
+    </div>
+
+    <div class="detail-card">
+      <h3><span style="color:var(--orange)">&#128269;</span> PR Monitor Service</h3>
+      <p>Background task that polls Git host providers every 60 seconds.</p>
+      <ul>
+        <li>Checks status of all open PRs in the database</li>
+        <li>Supports GitHub, GitLab, and Bitbucket</li>
+        <li>Updates merge status when PR state changes (Merged / Closed / Declined)</li>
+        <li><strong class="highlight-green">Auto-archives workspace</strong> when all PRs are merged</li>
+        <li>Syncs PR status to remote cloud server</li>
+      </ul>
+    </div>
+
+    <div class="detail-card">
+      <h3><span style="color:var(--purple)">&#128274;</span> Approval Service</h3>
+      <p>Gates executor actions that need human confirmation.</p>
+      <ul>
+        <li><strong>Tool approvals</strong> — User must approve before agent uses certain tools</li>
+        <li><strong>Question approvals</strong> — Agent asks user questions mid-execution</li>
+        <li>DashMap-based in-memory tracking (pending + completed)</li>
+        <li>Timeout watcher auto-expires stale approvals</li>
+        <li>Patches broadcast to frontend for real-time UI updates</li>
+      </ul>
+    </div>
+
+    <div class="detail-card">
+      <h3><span style="color:var(--cyan)">&#128257;</span> Queued Message Service</h3>
+      <p>Chains multiple agent runs without user intervention.</p>
+      <ul>
+        <li><code>queue_message()</code> — Queue follow-up while execution is running</li>
+        <li><code>take_queued()</code> — Consume after execution completes</li>
+        <li>Enables continuous agent iteration without blocking</li>
+        <li>One queued message per session at a time</li>
+      </ul>
+    </div>
+
+    <div class="detail-card">
+      <h3><span style="color:var(--pink)">&#128230;</span> Container Service</h3>
+      <p>Manages Docker containers and process lifecycle for workspaces.</p>
+      <ul>
+        <li><code>start_execution()</code> — Spawn process, create session</li>
+        <li><code>stop_execution()</code> — Graceful stop with cancellation tokens</li>
+        <li>Tracks child processes, message stores, DB stream handles</li>
+        <li>Auto-cleanup: debounced 2-minute timer for old workspaces</li>
+        <li>Image cleanup service removes orphaned Docker images</li>
+      </ul>
+    </div>
+
+    <div class="detail-card">
+      <h3><span style="color:var(--accent)">&#9729;</span> Remote Sync Service</h3>
+      <p>Pushes local workspace state to the cloud for team visibility.</p>
+      <ul>
+        <li>Syncs workspace metadata (name, archived, files changed, lines added/removed)</li>
+        <li>Syncs issue status from local workspace merge</li>
+        <li>Syncs PR information (status, commit SHA)</li>
+        <li>Configured via <code>VK_SHARED_API_BASE</code> env var</li>
+        <li>Graceful degradation — disabled if not configured</li>
+      </ul>
+    </div>
+
+    <div class="detail-card">
+      <h3><span style="color:var(--green)">&#128195;</span> Log Streaming Pipeline</h3>
+      <p>Real-time log processing from executor to UI.</p>
+      <ul>
+        <li>Executor stdout/stderr → MsgStore captures raw chunks</li>
+        <li>Log processors normalize entries (PlainText, per-executor)</li>
+        <li>Typed entries: ErrorMessage, FileChange, TodoItem, ToolStatus, AskQuestion</li>
+        <li>JSON patch generation with entry index tracking</li>
+        <li>Background DB tasks persist logs to filesystem (JSONL format)</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- TAB 5: ORACLE PDB LIFECYCLE                  -->
+<!-- ════════════════════════════════════════════ -->
+<div id="tab-pdb" class="tab-content">
+  <h2 class="section-title">Oracle Pluggable Database (PDB) — Full Lifecycle</h2>
+  <p style="color:var(--muted);margin-bottom:24px;font-size:0.9rem;">When a ticket is dragged to "In Progress", an isolated Oracle PDB is cloned from a template so the coding agent has its own database sandbox. This is the complete lifecycle.</p>
+
+  <!-- PDB OVERVIEW -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;">
+    <div class="detail-card" style="border-left:3px solid var(--orange);">
+      <h3><span style="color:var(--orange)">&#9881;</span> Why Pluggable DBs?</h3>
+      <p>Each coding task gets a <strong>fully isolated Oracle PDB clone</strong> so the agent can make schema changes, create objects, run DDL/DML freely without affecting the shared template database (<code>freepdb1</code>) or any other developer's work. After the agent finishes, the changes are validated by re-exporting and the PDB is dropped — the schema changes live only in the committed Git files.</p>
+    </div>
+    <div class="detail-card" style="border-left:3px solid var(--accent);">
+      <h3><span style="color:var(--accent)">&#128203;</span> Naming Convention</h3>
+      <div class="sub">PDB Name Format:
+  DEV_{first_8_hex_of_issue_uuid}_{4_random_hex}
+
+Example:
+  Issue UUID: a1b2c3d4-e5f6-7890-...
+  PDB Name:   DEV_A1B2C3D4_F5E6
+
+The random suffix prevents collisions when
+retrying (old PDB may still be dropping while
+the new one is created).</div>
+    </div>
+  </div>
+
+  <!-- PDB LIFECYCLE SVG -->
+  <h3 style="margin-bottom:16px;color:var(--text);">Complete PDB Lifecycle Flow</h3>
+  <div class="pipeline-wrapper">
+    <svg class="pipeline-svg" viewBox="0 0 1100 1800" width="1100" height="1800" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+
+      <!-- Vertical spine -->
+      <line x1="550" y1="10" x2="550" y2="1790" stroke="#30363d" stroke-width="2" stroke-dasharray="6 4"/>
+
+      <!-- ─── TRIGGER ─── -->
+      <rect x="340" y="20" width="420" height="70" rx="14" fill="#161b22" stroke="#bc8cff" stroke-width="2"/>
+      <text x="550" y="50" fill="#bc8cff" font-size="14" font-weight="700" text-anchor="middle">TRIGGER: Issue dragged to "In Progress"</text>
+      <text x="550" y="72" fill="#8b949e" font-size="11" text-anchor="middle">Requires extension_metadata.plan to exist (planning must be done)</text>
+      <polygon points="550,100 542,90 558,90" fill="#d29922"/>
+
+      <!-- ─── PHASE 1: SETUP SCRIPT ─── -->
+      <rect x="150" y="110" width="800" height="50" rx="10" fill="rgba(210,153,34,.1)" stroke="#d29922" stroke-width="1.5"/>
+      <text x="550" y="142" fill="#d29922" font-size="14" font-weight="700" text-anchor="middle">PHASE 1 — SetupScript (runs before coding agent)</text>
+
+      <!-- Step 1: Check existing -->
+      <rect x="300" y="180" width="500" height="60" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+      <circle cx="328" cy="205" r="10" fill="#d29922"/>
+      <text x="328" y="209" fill="#0d1117" font-size="10" font-weight="700" text-anchor="middle">1</text>
+      <text x="348" y="200" fill="#e6edf3" font-size="12" font-weight="600">Validate No Existing PDB</text>
+      <text x="348" y="220" fill="#8b949e" font-size="11">Queries v$pdbs to check if PDB name already exists</text>
+      <polygon points="550,250 542,240 558,240" fill="#58a6ff"/>
+
+      <!-- Step 2: Clone PDB -->
+      <rect x="240" y="260" width="620" height="100" rx="12" fill="#161b22" stroke="#d29922" stroke-width="2"/>
+      <circle cx="268" cy="290" r="10" fill="#d29922"/>
+      <text x="268" y="294" fill="#0d1117" font-size="10" font-weight="700" text-anchor="middle">2</text>
+      <text x="290" y="290" fill="#e6edf3" font-size="13" font-weight="700">Clone PDB from Template</text>
+      <text x="290" y="312" fill="#d29922" font-size="12" font-family="'SF Mono',monospace">CREATE PLUGGABLE DATABASE {pdb_name} FROM freepdb1;</text>
+      <text x="290" y="330" fill="#d29922" font-size="12" font-family="'SF Mono',monospace">ALTER PLUGGABLE DATABASE {pdb_name} OPEN READ WRITE;</text>
+      <text x="290" y="348" fill="#d29922" font-size="12" font-family="'SF Mono',monospace">ALTER PLUGGABLE DATABASE {pdb_name} SAVE STATE;</text>
+      <polygon points="550,370 542,360 558,360" fill="#58a6ff"/>
+
+      <!-- Step 3: Reset creds -->
+      <rect x="300" y="380" width="500" height="80" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+      <circle cx="328" cy="410" r="10" fill="#d29922"/>
+      <text x="328" y="414" fill="#0d1117" font-size="10" font-weight="700" text-anchor="middle">3</text>
+      <text x="348" y="408" fill="#e6edf3" font-size="12" font-weight="600">Reset Credentials &amp; Switch Container</text>
+      <text x="348" y="428" fill="#8b949e" font-size="11" font-family="'SF Mono',monospace">ALTER SESSION SET CONTAINER = {pdb_name};</text>
+      <text x="348" y="446" fill="#8b949e" font-size="11" font-family="'SF Mono',monospace">ALTER USER wk_app_app IDENTIFIED BY Welcome_1 ACCOUNT UNLOCK;</text>
+      <polygon points="550,470 542,460 558,460" fill="#58a6ff"/>
+
+      <!-- Step 4: Verify -->
+      <rect x="300" y="480" width="500" height="60" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+      <circle cx="328" cy="505" r="10" fill="#d29922"/>
+      <text x="328" y="509" fill="#0d1117" font-size="10" font-weight="700" text-anchor="middle">4</text>
+      <text x="348" y="502" fill="#e6edf3" font-size="12" font-weight="600">Verify PDB Connectivity from Container</text>
+      <text x="348" y="522" fill="#3fb950" font-size="11" font-family="'SF Mono',monospace">SELECT 'PDB_READY' FROM dual;  -- must return PDB_READY</text>
+      <polygon points="550,550 542,540 558,540" fill="#58a6ff"/>
+
+      <!-- Step 5: Map port -->
+      <rect x="300" y="560" width="500" height="60" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+      <circle cx="328" cy="585" r="10" fill="#d29922"/>
+      <text x="328" y="589" fill="#0d1117" font-size="10" font-weight="700" text-anchor="middle">5</text>
+      <text x="348" y="582" fill="#e6edf3" font-size="12" font-weight="600">Map Docker Port</text>
+      <text x="348" y="602" fill="#8b949e" font-size="11" font-family="'SF Mono',monospace">docker port local-{repo}-dev 1521 → HOST_PORT</text>
+      <polygon points="550,630 542,620 558,620" fill="#58a6ff"/>
+
+      <!-- Step 6: Named connection -->
+      <rect x="240" y="640" width="620" height="80" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <circle cx="268" cy="670" r="10" fill="#d29922"/>
+      <text x="268" y="674" fill="#0d1117" font-size="10" font-weight="700" text-anchor="middle">6</text>
+      <text x="290" y="668" fill="#e6edf3" font-size="12" font-weight="600">Create SQLcl Named Connection</text>
+      <text x="290" y="688" fill="#58a6ff" font-size="11" font-family="'SF Mono',monospace">connect -save {repo}-dev -savepwd</text>
+      <text x="290" y="706" fill="#58a6ff" font-size="11" font-family="'SF Mono',monospace">  wk_app_app/Welcome_1@localhost:{HOST_PORT}/{pdb_name}</text>
+      <polygon points="550,730 542,720 558,720" fill="#58a6ff"/>
+
+      <!-- Step 7: MCP override -->
+      <rect x="300" y="740" width="500" height="60" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+      <circle cx="328" cy="765" r="10" fill="#d29922"/>
+      <text x="328" y="769" fill="#0d1117" font-size="10" font-weight="700" text-anchor="middle">7</text>
+      <text x="348" y="762" fill="#e6edf3" font-size="12" font-weight="600">Configure Claude MCP Override for SQLcl</text>
+      <text x="348" y="782" fill="#8b949e" font-size="11">Writes local .mcp.json so agent's SQLcl MCP server uses the PDB connection</text>
+      <polygon points="550,810 542,800 558,800" fill="#58a6ff"/>
+
+      <!-- Step 8: .gitignore -->
+      <rect x="300" y="820" width="500" height="60" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+      <circle cx="328" cy="845" r="10" fill="#d29922"/>
+      <text x="328" y="849" fill="#0d1117" font-size="10" font-weight="700" text-anchor="middle">8</text>
+      <text x="348" y="842" fill="#e6edf3" font-size="12" font-weight="600">Update .gitignore</text>
+      <text x="348" y="862" fill="#8b949e" font-size="11">Adds: .claude/, .mcp.json, PLAN.md, .apex-work/</text>
+
+      <!-- Phase separator -->
+      <rect x="150" y="910" width="800" height="50" rx="10" fill="rgba(88,166,255,.1)" stroke="#58a6ff" stroke-width="1.5"/>
+      <text x="550" y="942" fill="#58a6ff" font-size="14" font-weight="700" text-anchor="middle">PHASE 2 — CodingAgent (main work)</text>
+      <polygon points="550,900 542,890 558,890" fill="#58a6ff"/>
+
+      <!-- Agent box -->
+      <rect x="260" y="980" width="580" height="120" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+      <text x="290" y="1010" fill="#e6edf3" font-size="13" font-weight="700">AI Coding Agent Executes</text>
+      <text x="290" y="1032" fill="#8b949e" font-size="11">Agent connects via: connect {repo}-dev</text>
+      <text x="290" y="1048" fill="#8b949e" font-size="11">Verifies: SELECT sys_context('USERENV','CON_NAME') FROM dual → must return PDB name</text>
+      <text x="290" y="1064" fill="#8b949e" font-size="11">Makes schema changes, creates objects, modifies data — all in the isolated PDB</text>
+      <text x="290" y="1084" fill="#8b949e" font-size="11">Real-time logs streamed to UI via EventService (SSE)</text>
+
+      <!-- Phase separator -->
+      <rect x="150" y="1130" width="800" height="50" rx="10" fill="rgba(63,185,80,.1)" stroke="#3fb950" stroke-width="1.5"/>
+      <text x="550" y="1162" fill="#3fb950" font-size="14" font-weight="700" text-anchor="middle">PHASE 3 — Validation (post-coding, pre-cleanup)</text>
+      <polygon points="550,1120 542,1110 558,1110" fill="#3fb950"/>
+
+      <!-- Validation steps -->
+      <rect x="260" y="1200" width="580" height="120" rx="12" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+      <text x="290" y="1228" fill="#e6edf3" font-size="13" font-weight="700">Re-Export &amp; Drift Detection</text>
+      <text x="290" y="1250" fill="#8b949e" font-size="11">1. Reconnects to PDB: wk_app_app@localhost:{port}/{pdb_name}</text>
+      <text x="290" y="1266" fill="#3fb950" font-size="11" font-family="'SF Mono',monospace">2. project export  — re-exports all objects from live PDB to filesystem</text>
+      <text x="290" y="1282" fill="#8b949e" font-size="11">3. git status check — compares re-exported files against committed state</text>
+      <text x="290" y="1302" fill="#8b949e" font-size="11">4. Known drift cleanup (ref_constraints/ files reset between PDB clones)</text>
+
+      <!-- Decision diamond -->
+      <polygon points="550,1350 610,1380 550,1410 490,1380" fill="#161b22" stroke="#d29922" stroke-width="1.5"/>
+      <text x="550" y="1384" fill="#d29922" font-size="10" font-weight="700" text-anchor="middle">DIRTY?</text>
+
+      <!-- Failure branch -->
+      <line x1="610" y1="1380" x2="820" y2="1380" stroke="#f85149" stroke-width="1.5"/>
+      <rect x="820" y="1360" width="230" height="40" rx="8" fill="#161b22" stroke="#f85149" stroke-width="1"/>
+      <text x="840" y="1385" fill="#f85149" font-size="11" font-weight="600">coding_status = "failed"</text>
+      <text x="935" y="1365" fill="#f85149" font-size="9">YES (drift detected)</text>
+
+      <!-- Success path -->
+      <line x1="550" y1="1410" x2="550" y2="1440" stroke="#3fb950" stroke-width="1.5"/>
+      <text x="560" y="1435" fill="#3fb950" font-size="9">NO (clean)</text>
+
+      <!-- Phase separator -->
+      <rect x="150" y="1450" width="800" height="50" rx="10" fill="rgba(248,81,73,.08)" stroke="#f85149" stroke-width="1.5"/>
+      <text x="550" y="1482" fill="#f85149" font-size="14" font-weight="700" text-anchor="middle">PHASE 4 — Cleanup (ALWAYS runs, even on failure)</text>
+
+      <!-- Cleanup Step 1 -->
+      <rect x="260" y="1520" width="580" height="80" rx="12" fill="#161b22" stroke="#f85149" stroke-width="1.5"/>
+      <circle cx="288" cy="1550" r="10" fill="#f85149"/>
+      <text x="288" y="1554" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">1</text>
+      <text x="310" y="1548" fill="#e6edf3" font-size="12" font-weight="600">Drop the Pluggable Database</text>
+      <text x="310" y="1568" fill="#f85149" font-size="11" font-family="'SF Mono',monospace">ALTER PLUGGABLE DATABASE {pdb_name} CLOSE IMMEDIATE INSTANCES=ALL;</text>
+      <text x="310" y="1586" fill="#f85149" font-size="11" font-family="'SF Mono',monospace">DROP PLUGGABLE DATABASE {pdb_name} INCLUDING DATAFILES;</text>
+      <polygon points="550,1610 542,1600 558,1600" fill="#f85149"/>
+
+      <!-- Cleanup Step 2 -->
+      <rect x="300" y="1620" width="500" height="60" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+      <circle cx="328" cy="1645" r="10" fill="#f85149"/>
+      <text x="328" y="1649" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">2</text>
+      <text x="348" y="1642" fill="#e6edf3" font-size="12" font-weight="600">Restore Original Named Connection</text>
+      <text x="348" y="1662" fill="#8b949e" font-size="11">Sources connections.sh → sql_app_connect dev → saves back to {repo}-dev</text>
+      <polygon points="550,1690 542,1680 558,1680" fill="#f85149"/>
+
+      <!-- Cleanup Step 3 -->
+      <rect x="300" y="1700" width="500" height="60" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+      <circle cx="328" cy="1725" r="10" fill="#f85149"/>
+      <text x="328" y="1729" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">3</text>
+      <text x="348" y="1722" fill="#e6edf3" font-size="12" font-weight="600">Remove Claude MCP Override</text>
+      <text x="348" y="1742" fill="#8b949e" font-size="11" font-family="'SF Mono',monospace">claude mcp remove sqlcl --scope local</text>
+
+      <!-- Side: Template DB info -->
+      <rect x="10" y="260" width="200" height="130" rx="12" fill="rgba(210,153,34,.06)" stroke="#d29922" stroke-width="1"/>
+      <text x="30" y="288" fill="#d29922" font-size="12" font-weight="700">Template: freepdb1</text>
+      <text x="30" y="310" fill="#8b949e" font-size="10">Pre-seeded Oracle PDB</text>
+      <text x="30" y="326" fill="#8b949e" font-size="10">with all app schemas,</text>
+      <text x="30" y="342" fill="#8b949e" font-size="10">users, and seed data.</text>
+      <text x="30" y="362" fill="#8b949e" font-size="10">Never modified — only</text>
+      <text x="30" y="378" fill="#d29922" font-size="10" font-weight="600">cloned as read-only source.</text>
+      <line x1="210" y1="310" x2="240" y2="310" stroke="#d29922" stroke-width="1" stroke-dasharray="3 2"/>
+
+      <!-- Side: Docker container info -->
+      <rect x="10" y="560" width="200" height="100" rx="12" fill="rgba(88,166,255,.06)" stroke="#58a6ff" stroke-width="1"/>
+      <text x="30" y="588" fill="#58a6ff" font-size="12" font-weight="700">Docker Container</text>
+      <text x="30" y="610" fill="#8b949e" font-size="10">Name: local-{repo}-dev</text>
+      <text x="30" y="626" fill="#8b949e" font-size="10">Exposes: port 1521</text>
+      <text x="30" y="642" fill="#8b949e" font-size="10">Runs Oracle XE/Free</text>
+      <line x1="210" y1="610" x2="300" y2="590" stroke="#58a6ff" stroke-width="1" stroke-dasharray="3 2"/>
+
+      <!-- Side: Metadata stored -->
+      <rect x="890" y="980" width="190" height="120" rx="12" fill="rgba(188,140,255,.06)" stroke="#bc8cff" stroke-width="1"/>
+      <text x="910" y="1008" fill="#bc8cff" font-size="12" font-weight="700">Metadata Stored</text>
+      <text x="910" y="1028" fill="#8b949e" font-size="10">coding_status</text>
+      <text x="910" y="1044" fill="#8b949e" font-size="10">coding_workspace_id</text>
+      <text x="910" y="1060" fill="#8b949e" font-size="10">coding_execution_id</text>
+      <text x="910" y="1076" fill="#d29922" font-size="10" font-weight="600">pdb_name</text>
+      <text x="910" y="1092" fill="#8b949e" font-size="10">coding_branch</text>
+      <line x1="840" y1="1040" x2="890" y2="1040" stroke="#bc8cff" stroke-width="1" stroke-dasharray="3 2"/>
+
+      <!-- Side: On retry -->
+      <rect x="890" y="1520" width="190" height="80" rx="12" fill="rgba(248,81,73,.06)" stroke="#f85149" stroke-width="1"/>
+      <text x="910" y="1548" fill="#f85149" font-size="12" font-weight="700">On Retry</text>
+      <text x="910" y="1568" fill="#8b949e" font-size="10">pdb_name cleared</text>
+      <text x="910" y="1584" fill="#8b949e" font-size="10">New random suffix</text>
+      <text x="910" y="1600" fill="#8b949e" font-size="10">prevents collisions</text>
+      <line x1="840" y1="1560" x2="890" y2="1560" stroke="#f85149" stroke-width="1" stroke-dasharray="3 2"/>
+
+    </svg>
+  </div>
+
+  <!-- Detail cards below SVG -->
+  <h3 style="margin:28px 0 16px;color:var(--text);">Key Technical Details</h3>
+  <div class="detail-grid">
+
+    <div class="detail-card" style="border-left:3px solid var(--orange);">
+      <h3>Template Database: <code>freepdb1</code></h3>
+      <p>The source PDB that every coding task clones from. It contains the full application schema — all tables, views, packages, triggers, sequences, and seed data. It is never modified directly; it serves as a read-only golden image. When the <code>CREATE PLUGGABLE DATABASE ... FROM freepdb1</code> runs, Oracle performs a full clone of all datafiles, creating a byte-identical but independent database that the agent can freely modify.</p>
+    </div>
+
+    <div class="detail-card" style="border-left:3px solid var(--accent);">
+      <h3>SQLcl Named Connections</h3>
+      <p>Instead of passing raw JDBC strings, the system uses SQLcl's named connection feature. During setup, it saves a connection called <code>{repo}-dev</code> that points to the newly cloned PDB at the mapped Docker port. The coding agent only needs to run <code>connect {repo}-dev</code> to get a fully authenticated session. During cleanup, this named connection is <strong>restored</strong> to point back at the original <code>freepdb1</code> database so manual developer workflows aren't broken.</p>
+    </div>
+
+    <div class="detail-card" style="border-left:3px solid var(--green);">
+      <h3>Re-Export Validation</h3>
+      <p>After the coding agent finishes, the system reconnects to the PDB and runs <code>project export</code> — this dumps all database objects back to the filesystem. It then checks <code>git status</code>: if the re-exported files differ from what the agent committed, it means the PDB state drifted from the file-based source of truth. Known drift (like <code>ref_constraints/</code> files that always differ between PDB clones) is automatically cleaned. If unexpected drift remains, coding is marked as <strong>failed</strong>.</p>
+    </div>
+
+    <div class="detail-card" style="border-left:3px solid var(--red);">
+      <h3>Cleanup Guarantees</h3>
+      <p>The PDB is <strong>always dropped</strong>, regardless of success or failure. The cleanup script runs as a separate phase (not chained to the agent's action) to ensure it executes even if the agent crashes. It closes the PDB with <code>CLOSE IMMEDIATE INSTANCES=ALL</code> and drops it with <code>INCLUDING DATAFILES</code> to reclaim disk space. If cleanup itself fails, a warning is logged but the process continues. On retry, a new random suffix is generated for the PDB name so there's no collision with a still-dropping old PDB.</p>
+    </div>
+
+    <div class="detail-card" style="border-left:3px solid var(--purple);">
+      <h3>MCP Override for Agent</h3>
+      <p>The setup script writes a local <code>.mcp.json</code> file into the workspace directory. This configures the Claude Code agent's SQLcl MCP server to use the PDB-specific named connection instead of the default. This means when the agent uses SQL tools through MCP, all queries automatically target the isolated PDB. During cleanup, this override is removed with <code>claude mcp remove sqlcl --scope local</code>.</p>
+    </div>
+
+    <div class="detail-card" style="border-left:3px solid var(--cyan);">
+      <h3>Connection Credentials</h3>
+      <div class="sub">User:     wk_app_app
+Password: Welcome_1
+Port:     1521 (Docker-mapped to dynamic host port)
+Service:  {pdb_name} (e.g., DEV_A1B2C3D4_F5E6)
+Host:     localhost
+
+Full JDBC:
+  wk_app_app/Welcome_1@localhost:{HOST_PORT}/{pdb_name}
+
+Agent verifies connection with:
+  SELECT sys_context('USERENV','CON_NAME') FROM dual;
+  → Must return the PDB name, NOT 'FREEPDB1'</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- TAB 6: DATA MODEL                           -->
+<!-- ════════════════════════════════════════════ -->
+<div id="tab-data" class="tab-content">
+  <h2 class="section-title">Data Model &amp; Metadata Schema</h2>
+
+  <div class="detail-grid">
+
+    <div class="detail-card">
+      <h3>Issue (local_issues)</h3>
+      <div class="sub">id              UUID (PK)
+project_id      UUID → local_projects
+issue_number    i32 (auto-increment per project)
+simple_id       String ("UC-42")
+status_id       UUID → local_project_statuses
+title           String
+description     Option&lt;String&gt;
+priority        "urgent" | "high" | "medium" | "low"
+sort_order      f64 (floating-point insertion sort)
+parent_issue_id Option&lt;UUID&gt; (sub-issues)
+extension_metadata  JSON (see below)
+start_date      Option&lt;String&gt;
+target_date     Option&lt;String&gt;
+completed_at    Option&lt;String&gt;
+creator_user_id Option&lt;UUID&gt;
+created_at      String
+updated_at      String</div>
+    </div>
+
+    <div class="detail-card">
+      <h3>extension_metadata (JSON)</h3>
+      <div class="sub">// Classification (from backlog enrichment)
+category          "Bug" | "Feature" | "Task"
+type              "packages" | "apex_app" | "db_objects"
+time_estimate     "30m"|"1h"|"2h"|"4h"|"1d"|"2d"|"3d"|"1w"
+assignee_user_id  UUID
+assignee_username String
+
+// Planning phase
+planning_status       "running" | "done" | "failed"
+planning_workspace_id UUID
+planning_execution_id UUID
+plan                  String (Markdown)
+
+// Coding phase
+coding_status         "running" | "done" | "failed"
+coding_workspace_id   UUID
+coding_execution_id   UUID
+coding_branch         String (git branch name)
+pdb_name              String ("DEV_xxxx_yyyy")
+
+// Merging phase
+merging_status        "running" | "failed"
+merging_error         String
+merging_pr_url        String (GitHub URL)
+merging_pr_merged     Boolean
+merge_commit_sha      String (git commit hash)
+jenkins_build_url     String
+jenkins_triggered     Boolean</div>
+    </div>
+
+    <div class="detail-card">
+      <h3>Status (local_project_statuses)</h3>
+      <div class="sub">id          UUID (PK)
+project_id  UUID → local_projects
+name        String ("To do", "In progress", etc.)
+color       String (HSL: "217 91% 60%")
+sort_order  i32 (lane ordering)
+hidden      Boolean (archive flag)
+created_at  String</div>
+    </div>
+
+    <div class="detail-card">
+      <h3>ExecutionProcess</h3>
+      <div class="sub">id              UUID (PK)
+session_id      UUID → sessions
+run_reason      SetupScript | CleanupScript |
+                ArchiveScript | CodingAgent | DevServer
+executor_action Serialized action payload
+status          Running | Completed | Failed | Killed
+exit_code       Option&lt;i32&gt;
+dropped         Boolean (hidden from history)
+started_at      String
+completed_at    Option&lt;String&gt;</div>
+    </div>
+
+    <div class="detail-card">
+      <h3>Project (local_projects)</h3>
+      <div class="sub">id              UUID (PK)
+name            String
+description     Option&lt;String&gt;
+prefix          String (e.g., "UC")
+issue_counter   i32 (auto-increment for IDs)
+created_at      String
+updated_at      String</div>
+    </div>
+
+    <div class="detail-card">
+      <h3>Workspace &amp; Session</h3>
+      <div class="sub">Workspace:
+  id, name, repo_path, branch
+  archived (Boolean)
+  files_changed, lines_added, lines_removed
+
+Session:
+  id, workspace_id
+  Links to ExecutionProcess runs
+
+CodingAgentTurn:
+  id, session_id, execution_process_id
+  prompt, response
+  Tracks individual agent conversation turns</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>
