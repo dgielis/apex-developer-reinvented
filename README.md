@@ -61,6 +61,7 @@ https://drive.google.com/drive/folders/1UOoht6u10UpiGaxfasj1z8sUfXQEua2A?usp=sha
 
 Run the executable for your platform
 
+```bash
   apex-bootstrap init -p NAME [-r DIR] [--force] [--include-production]
                                                       Full platform bootstrap
   apex-bootstrap add -p NAME [--app-id ID] [--include-production]
@@ -94,3 +95,4 @@ Commands:
           fnm, Node.js LTS, pnpm, Rust, cargo-watch, sqlx-cli,
           Claude Code, and Codex, then clone vibe-kanban into
           ./vibe-kanban or $VK_REPO_DIR using GH_TOKEN/GITHUB_TOKEN or SSH
+```
