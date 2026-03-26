@@ -6,13 +6,21 @@ and presentations that I've been given at APEX World, APEX Alpe Adria and KScope
 ## Presentation abstract
 
 AI can build an app in minutes. Give it a prompt, and you get a frontend, backend, and database… all wired together.
+
 Pretty impressive.
+
 But would you deploy that in a real enterprise? Probably not.
+
 Because when it matters, we still care about security, performance, data integrity, and maintainability. And that is exactly where Oracle APEX and the Oracle Database shine.
+
 In this session, I will show how AI is changing the way we build with APEX, and how our role as developers is evolving with it. We are no longer just creating pages and writing code. We become designers, orchestrators, and validators of what AI produces.
+
 Using a World Cup prediction app as a running example, I will go from idea to a working application with AI in the loop. From data model, to PL/SQL API, to a full APEX app. You will see how AI agents can accelerate development, and where human expertise still makes the difference.
+
 This is not about replacing developers. It is about becoming a 10x developer with AI.
+
 If you work with Oracle APEX, or are curious about what is coming next, this session will give you a real, practical look at the future of development.
+
 There is a lot to explore 😁
 
 ## Presentation download
