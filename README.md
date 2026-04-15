@@ -1,14 +1,14 @@
-# ⚠️ Work in Progress
+# The APEX Developer Reinvented
+
+This repo is to share information provided through my blog series at [https://dgielis.com/the-apex-developer-reinvented](https://dgielis.com/the-apex-developer-reinvented)
+and presentations that I've been given at APEX World, APEX Alpe Adria and KScope in 2026.
+
+## ⚠️ Work in Progress
 
 This is an actively evolving project 🚧
 Expect frequent changes, refactors, and the occasional breaking update.
 
 Right now, this is not production-ready—it’s mainly for exploration, experimentation, and iteration.
-
-# The APEX Developer Reinvented
-
-This repo is to share information provided through my blog series at [https://dgielis.com/the-apex-developer-reinvented](https://dgielis.com/the-apex-developer-reinvented)
-and presentations that I've been given at APEX World, APEX Alpe Adria and KScope in 2026.
 
 ## Presentation abstract
 
